@@ -1,0 +1,2418 @@
+ID----------------------------------------------------
+0
+200.0,100.0
+conected Inputs
+0
+0
+1.0
+1
+conected Inputs
+1
+0
+1.0
+1
+conected Inputs
+2
+0
+1.0
+1
+conected Inputs
+3
+0
+1.0
+1
+conected Inputs
+4
+0
+1.0
+1
+conected Inputs
+5
+0
+1.0
+1
+conected Inputs
+6
+0
+1.0
+1
+conected Inputs
+7
+0
+1.0
+1
+conected Inputs
+8
+0
+1.0
+1
+conected Inputs
+9
+0
+1.0
+1
+conected Inputs
+10
+0
+1.0
+1
+conected Inputs
+11
+0
+1.0
+1
+conected Inputs
+12
+0
+1.0
+1
+conected Inputs
+13
+0
+1.0
+1
+conected Inputs
+14
+0
+1.0
+1
+conected Inputs
+15
+0
+1.0
+1
+conected Inputs
+16
+0
+1.0
+1
+conected Inputs
+17
+0
+1.0
+1
+conected Inputs
+18
+0
+1.0
+1
+conected Inputs
+19
+0
+1.0
+1
+conected Inputs
+20
+0
+1.0
+1
+conected Inputs
+21
+0
+1.0
+1
+conected Inputs
+22
+0
+1.0
+1
+conected Inputs
+23
+0
+1.0
+1
+conected Inputs
+24
+0
+1.0
+1
+conected Inputs
+25
+0
+1.0
+1
+conected Inputs
+26
+0
+1.0
+1
+conected Inputs
+27
+0
+1.0
+1
+conected Inputs
+28
+0
+1.0
+1
+conected Inputs
+29
+0
+1.0
+1
+conected Inputs
+30
+0
+1.0
+1
+conected Inputs
+31
+0
+1.0
+1
+conected Inputs
+32
+0
+1.0
+1
+conected Inputs
+33
+0
+1.0
+1
+conected Inputs
+34
+0
+1.0
+1
+conected Inputs
+35
+0
+1.0
+1
+child nodes
+parent nodes
+lowest conected nodes
+end
+ID----------------------------------------------------
+1
+260.0,100.0
+conected Inputs
+0
+0
+1.0
+1
+conected Inputs
+1
+0
+1.0
+1
+conected Inputs
+2
+0
+1.0
+1
+conected Inputs
+3
+0
+1.0
+1
+conected Inputs
+4
+0
+1.0
+1
+conected Inputs
+5
+0
+1.0
+1
+conected Inputs
+6
+0
+1.0
+1
+conected Inputs
+7
+0
+1.0
+1
+conected Inputs
+8
+0
+1.0
+1
+conected Inputs
+9
+0
+1.0
+1
+conected Inputs
+10
+0
+1.0
+1
+conected Inputs
+11
+0
+1.0
+1
+conected Inputs
+12
+0
+1.0
+1
+conected Inputs
+13
+0
+1.0
+1
+conected Inputs
+14
+0
+1.0
+1
+conected Inputs
+15
+0
+1.0
+1
+conected Inputs
+16
+0
+1.0
+1
+conected Inputs
+17
+0
+1.0
+1
+conected Inputs
+18
+0
+1.0
+1
+conected Inputs
+19
+0
+1.0
+1
+conected Inputs
+20
+0
+1.0
+1
+conected Inputs
+21
+0
+1.0
+1
+conected Inputs
+22
+0
+1.0
+1
+conected Inputs
+23
+0
+1.0
+1
+conected Inputs
+24
+0
+1.0
+1
+conected Inputs
+25
+0
+1.0
+1
+conected Inputs
+26
+0
+1.0
+1
+conected Inputs
+27
+0
+1.0
+1
+conected Inputs
+28
+0
+1.0
+1
+conected Inputs
+29
+0
+1.0
+1
+conected Inputs
+30
+0
+1.0
+1
+conected Inputs
+31
+0
+1.0
+1
+conected Inputs
+32
+0
+1.0
+1
+conected Inputs
+33
+0
+1.0
+1
+conected Inputs
+34
+0
+1.0
+1
+conected Inputs
+35
+0
+1.0
+1
+child nodes
+parent nodes
+lowest conected nodes
+end
+ID----------------------------------------------------
+2
+320.0,100.0
+conected Inputs
+0
+0
+1.0
+1
+conected Inputs
+1
+0
+1.0
+1
+conected Inputs
+2
+0
+1.0
+1
+conected Inputs
+3
+0
+1.0
+1
+conected Inputs
+4
+0
+1.0
+1
+conected Inputs
+5
+0
+1.0
+1
+conected Inputs
+6
+0
+1.0
+1
+conected Inputs
+7
+0
+1.0
+1
+conected Inputs
+8
+0
+1.0
+1
+conected Inputs
+9
+0
+1.0
+1
+conected Inputs
+10
+0
+1.0
+1
+conected Inputs
+11
+0
+1.0
+1
+conected Inputs
+12
+0
+1.0
+1
+conected Inputs
+13
+0
+1.0
+1
+conected Inputs
+14
+0
+1.0
+1
+conected Inputs
+15
+0
+1.0
+1
+conected Inputs
+16
+0
+1.0
+1
+conected Inputs
+17
+0
+1.0
+1
+conected Inputs
+18
+0
+1.0
+1
+conected Inputs
+19
+0
+1.0
+1
+conected Inputs
+20
+0
+1.0
+1
+conected Inputs
+21
+0
+1.0
+1
+conected Inputs
+22
+0
+1.0
+1
+conected Inputs
+23
+0
+1.0
+1
+conected Inputs
+24
+0
+1.0
+1
+conected Inputs
+25
+0
+1.0
+1
+conected Inputs
+26
+0
+1.0
+1
+conected Inputs
+27
+0
+1.0
+1
+conected Inputs
+28
+0
+1.0
+1
+conected Inputs
+29
+0
+1.0
+1
+conected Inputs
+30
+0
+1.0
+1
+conected Inputs
+31
+0
+1.0
+1
+conected Inputs
+32
+0
+1.0
+1
+conected Inputs
+33
+0
+1.0
+1
+conected Inputs
+34
+0
+1.0
+1
+conected Inputs
+35
+0
+1.0
+1
+child nodes
+parent nodes
+lowest conected nodes
+end
+ID----------------------------------------------------
+3
+380.0,100.0
+conected Inputs
+0
+0
+1.0
+1
+conected Inputs
+1
+0
+1.0
+1
+conected Inputs
+2
+0
+1.0
+1
+conected Inputs
+3
+0
+1.0
+1
+conected Inputs
+4
+0
+1.0
+1
+conected Inputs
+5
+0
+1.0
+1
+conected Inputs
+6
+0
+1.0
+1
+conected Inputs
+7
+0
+1.0
+1
+conected Inputs
+8
+0
+1.0
+1
+conected Inputs
+9
+0
+1.0
+1
+conected Inputs
+10
+0
+1.0
+1
+conected Inputs
+11
+0
+1.0
+1
+conected Inputs
+12
+0
+1.0
+1
+conected Inputs
+13
+0
+1.0
+1
+conected Inputs
+14
+0
+1.0
+1
+conected Inputs
+15
+0
+1.0
+1
+conected Inputs
+16
+0
+1.0
+1
+conected Inputs
+17
+0
+1.0
+1
+conected Inputs
+18
+0
+1.0
+1
+conected Inputs
+19
+0
+1.0
+1
+conected Inputs
+20
+0
+1.0
+1
+conected Inputs
+21
+0
+1.0
+1
+conected Inputs
+22
+0
+1.0
+1
+conected Inputs
+23
+0
+1.0
+1
+conected Inputs
+24
+0
+1.0
+1
+conected Inputs
+25
+0
+1.0
+1
+conected Inputs
+26
+0
+1.0
+1
+conected Inputs
+27
+0
+1.0
+1
+conected Inputs
+28
+0
+1.0
+1
+conected Inputs
+29
+0
+1.0
+1
+conected Inputs
+30
+0
+1.0
+1
+conected Inputs
+31
+0
+1.0
+1
+conected Inputs
+32
+0
+1.0
+1
+conected Inputs
+33
+0
+1.0
+1
+conected Inputs
+34
+0
+1.0
+1
+conected Inputs
+35
+0
+1.0
+1
+child nodes
+parent nodes
+lowest conected nodes
+end
+ID----------------------------------------------------
+4
+440.0,100.0
+conected Inputs
+0
+0
+1.0
+1
+conected Inputs
+1
+0
+1.0
+1
+conected Inputs
+2
+0
+1.0
+1
+conected Inputs
+3
+0
+1.0
+1
+conected Inputs
+4
+0
+1.0
+1
+conected Inputs
+5
+0
+1.0
+1
+conected Inputs
+6
+0
+1.0
+1
+conected Inputs
+7
+0
+1.0
+1
+conected Inputs
+8
+0
+1.0
+1
+conected Inputs
+9
+0
+1.0
+1
+conected Inputs
+10
+0
+1.0
+1
+conected Inputs
+11
+0
+1.0
+1
+conected Inputs
+12
+0
+1.0
+1
+conected Inputs
+13
+0
+1.0
+1
+conected Inputs
+14
+0
+1.0
+1
+conected Inputs
+15
+0
+1.0
+1
+conected Inputs
+16
+0
+1.0
+1
+conected Inputs
+17
+0
+1.0
+1
+conected Inputs
+18
+0
+1.0
+1
+conected Inputs
+19
+0
+1.0
+1
+conected Inputs
+20
+0
+1.0
+1
+conected Inputs
+21
+0
+1.0
+1
+conected Inputs
+22
+0
+1.0
+1
+conected Inputs
+23
+0
+1.0
+1
+conected Inputs
+24
+0
+1.0
+1
+conected Inputs
+25
+0
+1.0
+1
+conected Inputs
+26
+0
+1.0
+1
+conected Inputs
+27
+0
+1.0
+1
+conected Inputs
+28
+0
+1.0
+1
+conected Inputs
+29
+0
+1.0
+1
+conected Inputs
+30
+0
+1.0
+1
+conected Inputs
+31
+0
+1.0
+1
+conected Inputs
+32
+0
+1.0
+1
+conected Inputs
+33
+0
+1.0
+1
+conected Inputs
+34
+0
+1.0
+1
+conected Inputs
+35
+0
+1.0
+1
+child nodes
+parent nodes
+lowest conected nodes
+end
+ID----------------------------------------------------
+5
+500.0,100.0
+conected Inputs
+0
+0
+1.0
+1
+conected Inputs
+1
+0
+1.0
+1
+conected Inputs
+2
+0
+1.0
+1
+conected Inputs
+3
+0
+1.0
+1
+conected Inputs
+4
+0
+1.0
+1
+conected Inputs
+5
+0
+1.0
+1
+conected Inputs
+6
+0
+1.0
+1
+conected Inputs
+7
+0
+1.0
+1
+conected Inputs
+8
+0
+1.0
+1
+conected Inputs
+9
+0
+1.0
+1
+conected Inputs
+10
+0
+1.0
+1
+conected Inputs
+11
+0
+1.0
+1
+conected Inputs
+12
+0
+1.0
+1
+conected Inputs
+13
+0
+1.0
+1
+conected Inputs
+14
+0
+1.0
+1
+conected Inputs
+15
+0
+1.0
+1
+conected Inputs
+16
+0
+1.0
+1
+conected Inputs
+17
+0
+1.0
+1
+conected Inputs
+18
+0
+1.0
+1
+conected Inputs
+19
+0
+1.0
+1
+conected Inputs
+20
+0
+1.0
+1
+conected Inputs
+21
+0
+1.0
+1
+conected Inputs
+22
+0
+1.0
+1
+conected Inputs
+23
+0
+1.0
+1
+conected Inputs
+24
+0
+1.0
+1
+conected Inputs
+25
+0
+1.0
+1
+conected Inputs
+26
+0
+1.0
+1
+conected Inputs
+27
+0
+1.0
+1
+conected Inputs
+28
+0
+1.0
+1
+conected Inputs
+29
+0
+1.0
+1
+conected Inputs
+30
+0
+1.0
+1
+conected Inputs
+31
+0
+1.0
+1
+conected Inputs
+32
+0
+1.0
+1
+conected Inputs
+33
+0
+1.0
+1
+conected Inputs
+34
+0
+1.0
+1
+conected Inputs
+35
+0
+1.0
+1
+child nodes
+parent nodes
+lowest conected nodes
+end
+ID----------------------------------------------------
+6
+200.0,160.0
+conected Inputs
+0
+0
+1.0
+1
+conected Inputs
+1
+0
+1.0
+1
+conected Inputs
+2
+0
+1.0
+1
+conected Inputs
+3
+0
+1.0
+1
+conected Inputs
+4
+0
+1.0
+1
+conected Inputs
+5
+0
+1.0
+1
+conected Inputs
+6
+0
+1.0
+1
+conected Inputs
+7
+0
+1.0
+1
+conected Inputs
+8
+0
+1.0
+1
+conected Inputs
+9
+0
+1.0
+1
+conected Inputs
+10
+0
+1.0
+1
+conected Inputs
+11
+0
+1.0
+1
+conected Inputs
+12
+0
+1.0
+1
+conected Inputs
+13
+0
+1.0
+1
+conected Inputs
+14
+0
+1.0
+1
+conected Inputs
+15
+0
+1.0
+1
+conected Inputs
+16
+0
+1.0
+1
+conected Inputs
+17
+0
+1.0
+1
+conected Inputs
+18
+0
+1.0
+1
+conected Inputs
+19
+0
+1.0
+1
+conected Inputs
+20
+0
+1.0
+1
+conected Inputs
+21
+0
+1.0
+1
+conected Inputs
+22
+0
+1.0
+1
+conected Inputs
+23
+0
+1.0
+1
+conected Inputs
+24
+0
+1.0
+1
+conected Inputs
+25
+0
+1.0
+1
+conected Inputs
+26
+0
+1.0
+1
+conected Inputs
+27
+0
+1.0
+1
+conected Inputs
+28
+0
+1.0
+1
+conected Inputs
+29
+0
+1.0
+1
+conected Inputs
+30
+0
+1.0
+1
+conected Inputs
+31
+0
+1.0
+1
+conected Inputs
+32
+0
+1.0
+1
+conected Inputs
+33
+0
+1.0
+1
+conected Inputs
+34
+0
+1.0
+1
+conected Inputs
+35
+0
+1.0
+1
+child nodes
+parent nodes
+lowest conected nodes
+end
+ID----------------------------------------------------
+7
+260.0,160.0
+conected Inputs
+0
+0
+1.0
+1
+conected Inputs
+1
+0
+1.0
+1
+conected Inputs
+2
+0
+1.0
+1
+conected Inputs
+3
+0
+1.0
+1
+conected Inputs
+4
+0
+1.0
+1
+conected Inputs
+5
+0
+1.0
+1
+conected Inputs
+6
+0
+1.0
+1
+conected Inputs
+7
+0
+1.0
+1
+conected Inputs
+8
+0
+1.0
+1
+conected Inputs
+9
+0
+1.0
+1
+conected Inputs
+10
+0
+1.0
+1
+conected Inputs
+11
+0
+1.0
+1
+conected Inputs
+12
+0
+1.0
+1
+conected Inputs
+13
+0
+1.0
+1
+conected Inputs
+14
+0
+1.0
+1
+conected Inputs
+15
+0
+1.0
+1
+conected Inputs
+16
+0
+1.0
+1
+conected Inputs
+17
+0
+1.0
+1
+conected Inputs
+18
+0
+1.0
+1
+conected Inputs
+19
+0
+1.0
+1
+conected Inputs
+20
+0
+1.0
+1
+conected Inputs
+21
+0
+1.0
+1
+conected Inputs
+22
+0
+1.0
+1
+conected Inputs
+23
+0
+1.0
+1
+conected Inputs
+24
+0
+1.0
+1
+conected Inputs
+25
+0
+1.0
+1
+conected Inputs
+26
+0
+1.0
+1
+conected Inputs
+27
+0
+1.0
+1
+conected Inputs
+28
+0
+1.0
+1
+conected Inputs
+29
+0
+1.0
+1
+conected Inputs
+30
+0
+1.0
+1
+conected Inputs
+31
+0
+1.0
+1
+conected Inputs
+32
+0
+1.0
+1
+conected Inputs
+33
+0
+1.0
+1
+conected Inputs
+34
+0
+1.0
+1
+conected Inputs
+35
+0
+1.0
+1
+child nodes
+parent nodes
+lowest conected nodes
+end
+ID----------------------------------------------------
+8
+320.0,160.0
+conected Inputs
+0
+0
+1.0
+1
+conected Inputs
+1
+0
+1.0
+1
+conected Inputs
+2
+0
+1.0
+1
+conected Inputs
+3
+0
+1.0
+1
+conected Inputs
+4
+0
+1.0
+1
+conected Inputs
+5
+0
+1.0
+1
+conected Inputs
+6
+0
+1.0
+1
+conected Inputs
+7
+0
+1.0
+1
+conected Inputs
+8
+0
+1.0
+1
+conected Inputs
+9
+0
+1.0
+1
+conected Inputs
+10
+0
+1.0
+1
+conected Inputs
+11
+0
+1.0
+1
+conected Inputs
+12
+0
+1.0
+1
+conected Inputs
+13
+0
+1.0
+1
+conected Inputs
+14
+0
+1.0
+1
+conected Inputs
+15
+0
+1.0
+1
+conected Inputs
+16
+0
+1.0
+1
+conected Inputs
+17
+0
+1.0
+1
+conected Inputs
+18
+0
+1.0
+1
+conected Inputs
+19
+0
+1.0
+1
+conected Inputs
+20
+0
+1.0
+1
+conected Inputs
+21
+0
+1.0
+1
+conected Inputs
+22
+0
+1.0
+1
+conected Inputs
+23
+0
+1.0
+1
+conected Inputs
+24
+0
+1.0
+1
+conected Inputs
+25
+0
+1.0
+1
+conected Inputs
+26
+0
+1.0
+1
+conected Inputs
+27
+0
+1.0
+1
+conected Inputs
+28
+0
+1.0
+1
+conected Inputs
+29
+0
+1.0
+1
+conected Inputs
+30
+0
+1.0
+1
+conected Inputs
+31
+0
+1.0
+1
+conected Inputs
+32
+0
+1.0
+1
+conected Inputs
+33
+0
+1.0
+1
+conected Inputs
+34
+0
+1.0
+1
+conected Inputs
+35
+0
+1.0
+1
+child nodes
+parent nodes
+lowest conected nodes
+end
+ID----------------------------------------------------
+9
+380.0,160.0
+conected Inputs
+0
+0
+1.0
+1
+conected Inputs
+1
+0
+1.0
+1
+conected Inputs
+2
+0
+1.0
+1
+conected Inputs
+3
+0
+1.0
+1
+conected Inputs
+4
+0
+1.0
+1
+conected Inputs
+5
+0
+1.0
+1
+conected Inputs
+6
+0
+1.0
+1
+conected Inputs
+7
+0
+1.0
+1
+conected Inputs
+8
+0
+1.0
+1
+conected Inputs
+9
+0
+1.0
+1
+conected Inputs
+10
+0
+1.0
+1
+conected Inputs
+11
+0
+1.0
+1
+conected Inputs
+12
+0
+1.0
+1
+conected Inputs
+13
+0
+1.0
+1
+conected Inputs
+14
+0
+1.0
+1
+conected Inputs
+15
+0
+1.0
+1
+conected Inputs
+16
+0
+1.0
+1
+conected Inputs
+17
+0
+1.0
+1
+conected Inputs
+18
+0
+1.0
+1
+conected Inputs
+19
+0
+1.0
+1
+conected Inputs
+20
+0
+1.0
+1
+conected Inputs
+21
+0
+1.0
+1
+conected Inputs
+22
+0
+1.0
+1
+conected Inputs
+23
+0
+1.0
+1
+conected Inputs
+24
+0
+1.0
+1
+conected Inputs
+25
+0
+1.0
+1
+conected Inputs
+26
+0
+1.0
+1
+conected Inputs
+27
+0
+1.0
+1
+conected Inputs
+28
+0
+1.0
+1
+conected Inputs
+29
+0
+1.0
+1
+conected Inputs
+30
+0
+1.0
+1
+conected Inputs
+31
+0
+1.0
+1
+conected Inputs
+32
+0
+1.0
+1
+conected Inputs
+33
+0
+1.0
+1
+conected Inputs
+34
+0
+1.0
+1
+conected Inputs
+35
+0
+1.0
+1
+child nodes
+parent nodes
+lowest conected nodes
+end
+ID----------------------------------------------------
+10
+440.0,160.0
+conected Inputs
+0
+0
+1.0
+1
+conected Inputs
+1
+0
+1.0
+1
+conected Inputs
+2
+0
+1.0
+1
+conected Inputs
+3
+0
+1.0
+1
+conected Inputs
+4
+0
+1.0
+1
+conected Inputs
+5
+0
+1.0
+1
+conected Inputs
+6
+0
+1.0
+1
+conected Inputs
+7
+0
+1.0
+1
+conected Inputs
+8
+0
+1.0
+1
+conected Inputs
+9
+0
+1.0
+1
+conected Inputs
+10
+0
+1.0
+1
+conected Inputs
+11
+0
+1.0
+1
+conected Inputs
+12
+0
+1.0
+1
+conected Inputs
+13
+0
+1.0
+1
+conected Inputs
+14
+0
+1.0
+1
+conected Inputs
+15
+0
+1.0
+1
+conected Inputs
+16
+0
+1.0
+1
+conected Inputs
+17
+0
+1.0
+1
+conected Inputs
+18
+0
+1.0
+1
+conected Inputs
+19
+0
+1.0
+1
+conected Inputs
+20
+0
+1.0
+1
+conected Inputs
+21
+0
+1.0
+1
+conected Inputs
+22
+0
+1.0
+1
+conected Inputs
+23
+0
+1.0
+1
+conected Inputs
+24
+0
+1.0
+1
+conected Inputs
+25
+0
+1.0
+1
+conected Inputs
+26
+0
+1.0
+1
+conected Inputs
+27
+0
+1.0
+1
+conected Inputs
+28
+0
+1.0
+1
+conected Inputs
+29
+0
+1.0
+1
+conected Inputs
+30
+0
+1.0
+1
+conected Inputs
+31
+0
+1.0
+1
+conected Inputs
+32
+0
+1.0
+1
+conected Inputs
+33
+0
+1.0
+1
+conected Inputs
+34
+0
+1.0
+1
+conected Inputs
+35
+0
+1.0
+1
+child nodes
+parent nodes
+lowest conected nodes
+end
+ID----------------------------------------------------
+11
+500.0,160.0
+conected Inputs
+0
+0
+1.0
+1
+conected Inputs
+1
+0
+1.0
+1
+conected Inputs
+2
+0
+1.0
+1
+conected Inputs
+3
+0
+1.0
+1
+conected Inputs
+4
+0
+1.0
+1
+conected Inputs
+5
+0
+1.0
+1
+conected Inputs
+6
+0
+1.0
+1
+conected Inputs
+7
+0
+1.0
+1
+conected Inputs
+8
+0
+1.0
+1
+conected Inputs
+9
+0
+1.0
+1
+conected Inputs
+10
+0
+1.0
+1
+conected Inputs
+11
+0
+1.0
+1
+conected Inputs
+12
+0
+1.0
+1
+conected Inputs
+13
+0
+1.0
+1
+conected Inputs
+14
+0
+1.0
+1
+conected Inputs
+15
+0
+1.0
+1
+conected Inputs
+16
+0
+1.0
+1
+conected Inputs
+17
+0
+1.0
+1
+conected Inputs
+18
+0
+1.0
+1
+conected Inputs
+19
+0
+1.0
+1
+conected Inputs
+20
+0
+1.0
+1
+conected Inputs
+21
+0
+1.0
+1
+conected Inputs
+22
+0
+1.0
+1
+conected Inputs
+23
+0
+1.0
+1
+conected Inputs
+24
+0
+1.0
+1
+conected Inputs
+25
+0
+1.0
+1
+conected Inputs
+26
+0
+1.0
+1
+conected Inputs
+27
+0
+1.0
+1
+conected Inputs
+28
+0
+1.0
+1
+conected Inputs
+29
+0
+1.0
+1
+conected Inputs
+30
+0
+1.0
+1
+conected Inputs
+31
+0
+1.0
+1
+conected Inputs
+32
+0
+1.0
+1
+conected Inputs
+33
+0
+1.0
+1
+conected Inputs
+34
+0
+1.0
+1
+conected Inputs
+35
+0
+1.0
+1
+child nodes
+parent nodes
+lowest conected nodes
+end
+ID----------------------------------------------------
+12
+200.0,220.0
+conected Inputs
+0
+0
+1.0
+1
+conected Inputs
+1
+0
+1.0
+1
+conected Inputs
+2
+0
+1.0
+1
+conected Inputs
+3
+0
+1.0
+1
+conected Inputs
+4
+0
+1.0
+1
+conected Inputs
+5
+0
+1.0
+1
+conected Inputs
+6
+0
+1.0
+1
+conected Inputs
+7
+0
+1.0
+1
+conected Inputs
+8
+0
+1.0
+1
+conected Inputs
+9
+0
+1.0
+1
+conected Inputs
+10
+0
+1.0
+1
+conected Inputs
+11
+0
+1.0
+1
+conected Inputs
+12
+0
+1.0
+1
+conected Inputs
+13
+0
+1.0
+1
+conected Inputs
+14
+0
+1.0
+1
+conected Inputs
+15
+0
+1.0
+1
+conected Inputs
+16
+0
+1.0
+1
+conected Inputs
+17
+0
+1.0
+1
+conected Inputs
+18
+0
+1.0
+1
+conected Inputs
+19
+0
+1.0
+1
+conected Inputs
+20
+0
+1.0
+1
+conected Inputs
+21
+0
+1.0
+1
+conected Inputs
+22
+0
+1.0
+1
+conected Inputs
+23
+0
+1.0
+1
+conected Inputs
+24
+0
+1.0
+1
+conected Inputs
+25
+0
+1.0
+1
+conected Inputs
+26
+0
+1.0
+1
+conected Inputs
+27
+0
+1.0
+1
+conected Inputs
+28
+0
+1.0
+1
+conected Inputs
+29
+0
+1.0
+1
+conected Inputs
+30
+0
+1.0
+1
+conected Inputs
+31
+0
+1.0
+1
+conected Inputs
+32
+0
+1.0
+1
+conected Inputs
+33
+0
+1.0
+1
+conected Inputs
