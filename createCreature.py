@@ -1,3 +1,4 @@
+# createCreature.py
 from shared import *
 
 poly=[(20,20), (-20,20), (-20,-20), (20,-20),   (0,20), (20,0), (0,-20), (-20,0), (40,40) ]
@@ -10,5 +11,3 @@ ann.createOutputs(5)
 ann.poly=poly
 ann.saveNet("Best")
 ann.saveNet("child")
-
-a=0
