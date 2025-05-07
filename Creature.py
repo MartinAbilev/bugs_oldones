@@ -1,4 +1,5 @@
 import pygame
+import numpy as np
 from Box2D import *
 import time
 import math
@@ -8,10 +9,21 @@ from shared import *
 pygame.init()
 w = pygame.display.set_mode((640, 480))
 pygame.display.set_caption("My first Pygame Window - or not ?")
+clock = pygame.time.Clock()  # For frame rate control
 
-# Load font
+# Create background surface for static boundaries
+background = pygame.Surface((640, 480))
+background.fill((0, 0, 0))
+# Draw boundaries once
+pygame.draw.rect(background, (255, 0, 0), (0, 0, 500, 5), 1)
+pygame.draw.rect(background, (255, 0, 0), (0, 400, 500, 5), 1)
+pygame.draw.rect(background, (255, 0, 0), (0, 0, 5, 400), 1)
+pygame.draw.rect(background, (255, 0, 0), (500, 0, 5, 400), 1)
+
+# Load and cache fonts
 try:
-    font = pygame.font.SysFont("arial", 8)
+    font_8 = pygame.font.SysFont("arial", 8)
+    font_12 = pygame.font.SysFont("arial", 12)
 except Exception as e:
     print("Font error:", e)
     exit(1)
@@ -33,12 +45,11 @@ class vector2d(object):
     def __add__(self, other):
         return vector2d(self.x + other.x, self.y + other.y)
 
-# Text rendering
-def text(msg, pos, c, s):
-    global font
-    text_font = pygame.font.SysFont("arial", s)
-    text_surface = text_font.render(msg, True, c)
-    w.blit(text_surface, (pos.x, pos.y - 11))
+# Text rendering with cached fonts
+def text(surface, msg, pos, c, size):
+    font = font_8 if size == 8 else font_12
+    text_surface = font.render(msg, True, c)
+    surface.blit(text_surface, (pos.x, pos.y - 11))
 
 # Box2D contact listener
 class myContactListener(b2ContactListener):
@@ -87,17 +98,12 @@ class mworld:
 wrld = mworld()
 
 # Drawing functions
-def dcircle(pos, angle, r, R, G, B):
-    pygame.draw.circle(w, (R, G, B), (pos.x, pos.y), r)
-    pygame.draw.circle(w, (255, 0, 0), (pos.x, pos.y), r, 1)  # Outline
-    # Rotation is not directly supported; handled by polygon rotation in objectA.draw
+def dcircle(surface, pos, angle, r, R, G, B):
+    pygame.draw.circle(surface, (R, G, B), (pos.x, pos.y), r)
+    pygame.draw.circle(surface, (255, 0, 0), (pos.x, pos.y), r, 1)
 
-def line(frm, to):
-    pygame.draw.line(w, (255, 255, 255), (frm.x, frm.y), (to.x, to.y))
-
-def square(pos, angle, size):
-    rect = pygame.Rect(pos.x, pos.y, size.x, size.y)
-    pygame.draw.rect(w, (255, 0, 0), rect, 1)
+def line(surface, frm, to):
+    pygame.draw.line(surface, (255, 255, 255), (frm.x, frm.y), (to.x, to.y))
 
 # Polygon rotation
 def rotatePolygon(polygon, theta):
@@ -136,7 +142,7 @@ class objectA:
     def AnnStep(self):
         self.Ann.annStep()
 
-    def readColor(self, centerpos2, p):
+    def readColor(self, pixel_array, centerpos2, p):
         f = 1.2
         x = int(centerpos2.x + (self.poly[p][0] * f))
         y = int(centerpos2.y + (self.poly[p][1] * f))
@@ -149,18 +155,18 @@ class objectA:
         if y >= 480:
             y = 479
         try:
-            color = w.get_at((x, y))
+            color = pixel_array[x, y]
             return type('Color', (), {'r': color[0], 'g': color[1], 'b': color[2]})
         except:
             return type('Color', (), {'r': 0, 'g': 0, 'b': 0})
 
-    def sense(self):
+    def sense(self, pixel_array):
         if self.death == 0:
             pos2 = vector2d(self.body.position.x + self.r, self.body.position.y + self.r)
             centerpos2 = vector2d(pos2.x - self.r, pos2.y - self.r)
             colors = []
             for i in range(len(self.poly)):
-                colors.append(self.readColor(centerpos2, i))
+                colors.append(self.readColor(pixel_array, centerpos2, i))
             global gr
             for i in range(len(self.poly)):
                 self.Ann.outSet(i + gr, colors[i].r)
@@ -188,7 +194,7 @@ class objectA:
                     self.death = 1
             self.time += 1
 
-    def draw(self):
+    def draw(self, surface):
         if self.lives <= 0:
             self.death = 1
         if self.death == 0:
@@ -199,10 +205,11 @@ class objectA:
             self.poly = self.Ann.poly
             self.poly = rotatePolygon(self.poly, rot)
             global gr
-            dcircle(pos, rot, self.r, 255, self.Ann.colorG, self.Ann.colorB)
-            dcircle(vector2d(self.centerpos.x + 2, self.centerpos.y + 2), rot, 2, 0, 255, 0)
+            dcircle(surface, pos, rot, self.r, 255, self.Ann.colorG, self.Ann.colorB)
+            dcircle(surface, vector2d(self.centerpos.x + 2, self.centerpos.y + 2), rot, 2, 0, 255, 0)
             for i in range(len(self.poly)):
                 dcircle(
+                    surface,
                     vector2d(self.centerpos.x + self.poly[i][0] + 2, self.centerpos.y + self.poly[i][1] + 2),
                     rot, 2, 0, self.Ann.neurons[i + gr].out, 0
                 )
@@ -267,38 +274,51 @@ while running:
     mouse_pos = pygame.mouse.get_pos()
     mPos = vector2d(mouse_pos[0], mouse_pos[1])
 
-    # Clear screen
-    w.fill((0, 0, 0))
+    # Clear screen and draw background
+    w.blit(background, (0, 0))
 
-    # Draw boundaries
-    square(vector2d(0, 0), 0, vector2d(500, 5))
-    square(vector2d(0, 400), 0, vector2d(500, -5))
-    square(vector2d(500, 0), 0, vector2d(-5, 400))
-    square(vector2d(0, 0), 0, vector2d(5, 400))
+    # Draw mouse
+    dcircle(w, mPos, 0, 30, 255, 0, 0)
 
-    # Draw mouse and handle input
-    dcircle(mPos, 0, 30, 255, 0, 0)
-    if pygame.mouse.get_pressed()[2]:  # Right mouse
+    # Handle input and update creatures
+    right_click = pygame.mouse.get_pressed()[2]
+    left_click = pygame.mouse.get_pressed()[0]
+    if right_click:
         lifeTimeRecord = 0
+
+    # Draw creatures (first pass to ensure correct pixel data)
     alive = 0
     for obj in objects:
-        obj.draw()
-        if pygame.mouse.get_pressed()[0]:  # Left mouse
-            if obj.death == 0:
-                obj.Ann.randomizeWeights(0.1)
         if obj.death == 0:
+            obj.draw(w)
             alive += 1
+
+    # Capture pixel array for color sensing
+    pixel_array = pygame.surfarray.pixels3d(w)
+
+    # Update creatures and remove dead ones
+    to_remove = []
     for obj in objects:
-        obj.sense()
+        if obj.death == 0:
+            obj.sense(pixel_array)
+            if left_click:
+                obj.Ann.randomizeWeights(0.1)
         if obj.death == 1:
             obj.body.active = False
-            objects.remove(obj)
+            to_remove.append(obj)
+
+    # Release pixel array
+    del pixel_array
+
+    # Remove dead objects
+    for obj in to_remove:
+        objects.remove(obj)
 
     # Draw text overlays
-    text(str(lifeTimeRecord), vector2d(505, 10), (255, 0, 0), 8)
+    text(w, str(lifeTimeRecord), vector2d(505, 10), (255, 0, 0), 8)
     i = 0
     for obj in objects:
-        text(f"{obj.time} lives={obj.lives}", vector2d(505, 20 + (i * 10)), (0, 255, 0), 8)
+        text(w, f"{obj.time} lives={obj.lives}", vector2d(505, 20 + (i * 10)), (0, 255, 0), 8)
         i += 1
         if obj.death == 0:
             j = 0
@@ -315,6 +335,7 @@ while running:
                 if cg > 255:
                     cg = 255
                 text(
+                    w,
                     f"  {round(neuron.out, 2):.2f}   ",
                     vector2d(j * (500 / len(obj.Ann.neurons)), 400 + (i * 10)),
                     (cr, cg, 100), 8
@@ -332,6 +353,9 @@ while running:
     if alive <= 0 or cnext == 1:
         cnext = 0
         createNext()
+
+    # Cap frame rate
+    clock.tick(60)
 
 # Cleanup
 pygame.quit()
