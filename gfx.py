@@ -1,321 +1,228 @@
-import time 
-from shared import *
-import sfml as sf
-from vmath import *
+import time
+import pygame
+from shared import *  # Assuming this includes Neuron, NeuralNetwork, etc.
 
+# Define vector2d class to replace sf.Vector2
+class vector2d(object):
+    def __init__(self, X, Y):
+        self.x = X
+        self.y = Y
 
-w = sf.RenderWindow(sf.VideoMode(640, 480), "CYBERMIND v0.1", sf.Style.DEFAULT ,sf.ContextSettings(8, 16, 8, 2, 0) )  
-#int depth=0, int stencil=0, int antialiasing=0, int major=2, int minor=0)
-#w.window.ContextSettings(8, 16, 4, 2, 0)
-#mPos=sf.Vector2(0, 0)
+# Initialize Pygame
+pygame.init()
+w = pygame.display.set_mode((640, 480))
+pygame.display.set_caption("CYBERMIND v0.1")
 
+# Load font
+try:
+    font = pygame.font.SysFont("arial", 16)
+except Exception as e:
+    print("Font error:", e)
+    exit(1)
 
-mouseOn=-1
+# Global variables
+mouseOn = -1
+cstate = -1
+cswitch = 0
+selected = 0
+onbutton = 0
+mPos = vector2d(0, 0)
 
-global rButton
-
-cstate=-1
-cswitch=0
-
-selected=0
-onbutton=0
-
-# declare and load a font
-try: font = sf.Font.from_file("arial.ttf")
-except IOError: 
-        print("font error")
-        exit(1)
-
-
-
-    
+# Helper function to calculate distance (replacing vmath.cDist if needed)
+def cDist(pos1, pos2):
+    return ((pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2) ** 0.5
 
 def status(ann):
     print(ann.maxN)
     print(ann.a)
     print(ann.b)
     global cstate
-    
-        
+
 def clear():
-    w.clear() # clear screen
-    
+    w.fill((0, 0, 0))  # Clear screen with black
 
-        
+def circle(pos, r, c):
+    global mPos
+    g = 0
+    if c < 0:
+        g = c * -1
+        c = 0
+    if g > 255:
+        g = 255
+    if c > 255:
+        c = 255
 
-def circle(pos,r,c):
-    g=0
-    if c<0:
-        g=c*-1
-        c=0
-    
-    if g>255:g=255
-        
-    
-    
-    if c>255:c=255
-    
-    if cDist(pos, mPos)<r:
-        #print("colizion "+str(cDist(pos, mPos) ) )
-        r-=4
-        onmouse=1
+    if cDist(pos, mPos) < r:
+        r -= 4
+        onmouse = 1
     else:
-        onmouse=0
-    
-    crcl=sf.CircleShape()
-    
-    crcl.radius=r
-    crcl.outline_color=sf.Color.RED
-    crcl.fill_color=sf.Color(c , g, 0)
-    crcl.outline_thickness=1
-    crcl.position = (pos.x-crcl.radius, pos.y-crcl.radius)
-    crcl.point_count=6
-    
-    w.draw(crcl)
+        onmouse = 0
+
+    pygame.draw.circle(w, (c, g, 0), (pos.x, pos.y), r)
+    pygame.draw.circle(w, (255, 0, 0), (pos.x, pos.y), r, 1)  # Outline
     return onmouse
-        
-     
-     
-def line(frm,to):
-        lines = sf.VertexArray(sf.PrimitiveType.LINES_STRIP, 2)
-        lines[0].position = ( float(frm.x), float(frm.y) )
-        lines[1].position = ( float(to.x), float(to.y) )
 
-        w.draw(lines)
-        
-        
+def line(frm, to):
+    pygame.draw.line(w, (255, 255, 255), (frm.x, frm.y), (to.x, to.y))
+
 def square(a, b):
-    sq=sf.VertexArray(sf.PrimitiveType.LINES_STRIP, 5)
-    sq[0].position = (a.x, a.y)
-    sq[1].position = (b.x, a.y)
-    sq[2].position = (b.x, b.y)
-    sq[3].position = (a.x, b.y)
-    sq[4].position = (a.x, a.y)
-    
-    w.draw(sq)
-    
-    
-    if mPos.x>a.x and mPos.x<b.x and mPos.y>a.y and mPos.y<b.y: return 1
-    else: return 0
-        
+    rect = pygame.Rect(a.x, a.y, b.x - a.x, b.y - a.y)
+    pygame.draw.rect(w, (255, 255, 255), rect, 1)
+    if a.x < mPos.x < b.x and a.y < mPos.y < b.y:
+        return 1
+    return 0
 
-
-
-
-
-
-
-def text(msg,pos,c,s):
-    # declare and load a font
-    global font 
-    
-    # create a text
-    text = sf.Text(msg)
-    text.font = font
-    text.character_size = s
-    text.style = sf.Text.REGULAR
-    text.color = c
-    text.position=( sf.Vector2(pos.x+16, pos.y-11) )
-    
-    w.draw(text)
-
+def text(msg, pos, c, s):
+    global font
+    font_size = s
+    text_font = pygame.font.SysFont("arial", font_size)
+    text_surface = text_font.render(msg, True, c)
+    w.blit(text_surface, (pos.x + 16, pos.y - 11))
 
 def button(name, pos):
-    global onbutton 
-        
-    if square(pos, sf.Vector2(pos.x+4*16, pos.y+16))==1: 
-        col=sf.Color.RED
-        bool= 1
-        onbutton=1
-    else: 
-        col=sf.Color.WHITE
-        bool= 0
-        
-    
-    
-    offset=sf.Vector2(0, 8)
-    text(name, pos+offset, col,16)
-    return bool
-
+    global onbutton
+    pos_b = vector2d(pos.x + 4 * 16, pos.y + 16)
+    if square(pos, pos_b) == 1:
+        col = (255, 0, 0)  # Red
+        bool_val = 1
+        onbutton = 1
+    else:
+        col = (255, 255, 255)  # White
+        bool_val = 0
+    offset = vector2d(0, 8)
+    text(name, vector2d(pos.x + offset.x, pos.y + offset.y), col, 16)
+    return bool_val
 
 def gui(ann):
-    a=0
-    
-def gloop(ann):
-    global mPos
-    global mouseOn
-    global cstate 
-    global cswitch
-    global selected
-    global onbutton
-    onbutton=0
-    
-    mPos = sf.Mouse.get_position(w)  
-    
-    
-    
-    
-    
-    
-    
+    pass  # Placeholder if needed
 
-    
-    for event in w.events:
-                # close window: exit
-                if type(event) is sf.CloseEvent:
-                    w.close()
-                if type(event) is sf.ResizeEvent:
-                    
-                    pos=w.position
-                    
-                    w.recreate(sf.VideoMode(event.size.x, event.size.y), "CYBERMIND v0.1", sf.Style.DEFAULT ,sf.ContextSettings(8, 16, 8, 2, 0))
-                    
-                    w.position=pos
-                    
-                if type(event) is sf.MouseWheelEvent:
-                    ann.neurons[mouseOn].out+=event.delta *0.1
-    
-  
-    if not sf.Mouse.is_button_pressed(sf.Mouse.LEFT):mouseOn=-1
-    
-    
+def gloop(ann):
+    global mPos, mouseOn, cstate, cswitch, selected, onbutton
+    onbutton = 0
+
+    # Update mouse position
+    mouse_pos = pygame.mouse.get_pos()
+    mPos = vector2d(mouse_pos[0], mouse_pos[1])
+
+    # Handle events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            exit()
+        if event.type == pygame.VIDEORESIZE:
+            w = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+            pygame.display.set_caption("CYBERMIND v0.1")
+        if event.type == pygame.MOUSEWHEEL:
+            if mouseOn >= 0:
+                ann.neurons[mouseOn].out += event.y * 0.1
+
+    # Reset mouseOn if left mouse button is not pressed
+    if not pygame.mouse.get_pressed()[0]:
+        mouseOn = -1
+
+    # Draw connections
     for neuron in ann.neurons:
         for c in neuron.conection:
-            line(neuron.pos, ann.neurons[c.to].pos)    
-    
-    
+            line(neuron.pos, ann.neurons[c.to].pos)
+
+    # Draw neurons and text
     for neuron in ann.neurons:
-        
-        if circle(neuron.pos, 16, 255*neuron.out)==1:
-            mouseOn=neuron.nid
-        #text
-        text(str( round(neuron.out,3) ) , neuron.pos , sf.Color.RED, 8  )
-            
-    
-    
-    #buttons
-    bp=10
-    if  button("save", sf.Vector2(10, bp) )==1 and sf.Mouse.is_button_pressed(sf.Mouse.LEFT): 
+        if circle(neuron.pos, 16, 255 * neuron.out) == 1:
+            mouseOn = neuron.nid
+        text(str(round(neuron.out, 3)), neuron.pos, (255, 0, 0), 8)
+
+    # Draw buttons
+    bp = 10
+    if button("save", vector2d(10, bp)) == 1 and pygame.mouse.get_pressed()[0]:
         print("save")
         ann.saveNet()
-        time.sleep(1)  
+        time.sleep(1)
+    bp += 30
 
-    bp+=30
-        
-        
-    if  button("load", sf.Vector2(10, bp) )==1 and sf.Mouse.is_button_pressed(sf.Mouse.LEFT): 
+    if button("load", vector2d(10, bp)) == 1 and pygame.mouse.get_pressed()[0]:
         print("load")
         ann.loadNet()
-        time.sleep(1)  
-    bp+=30
+        time.sleep(1)
+    bp += 30
 
-    
-    if  button("clear", sf.Vector2(10, bp) )==1 and sf.Mouse.is_button_pressed(sf.Mouse.LEFT): 
+    if button("clear", vector2d(10, bp)) == 1 and pygame.mouse.get_pressed()[0]:
         print("clear")
-        ann.neurons=[]
-        ann.maxN=0
-    bp+=30
-    
-    
-    if  button("sort", sf.Vector2(10, bp) )==1 and sf.Mouse.is_button_pressed(sf.Mouse.LEFT): 
+        ann.neurons = []
+        ann.maxN = 0
+    bp += 30
+
+    if button("sort", vector2d(10, bp)) == 1 and pygame.mouse.get_pressed()[0]:
         ann.sort()
-    bp+=30
-    
-    if  button("train", sf.Vector2(10, bp) )==1 and sf.Mouse.is_button_pressed(sf.Mouse.LEFT): 
+    bp += 30
+
+    if button("train", vector2d(10, bp)) == 1 and pygame.mouse.get_pressed()[0]:
         print("Train as ERROR")
-    bp+=30
-    
-    if  button("rand", sf.Vector2(10, bp) )==1 and sf.Mouse.is_button_pressed(sf.Mouse.LEFT): 
-        print("randomize veights")
-        ann.randomizeWeights()
-    bp+=30
-    
-    if  button("crgrid", sf.Vector2(10, bp) )==1 and sf.Mouse.is_button_pressed(sf.Mouse.LEFT): 
+    bp += 30
+
+    if button("rand", vector2d(10, bp)) == 1 and pygame.mouse.get_pressed()[0]:
+        print("randomize weights")
+        ann.randomizeWeights(0.1)
+    bp += 30
+
+    if button("crgrid", vector2d(10, bp)) == 1 and pygame.mouse.get_pressed()[0]:
         print("crgrid")
         ann.createGrid(6)
         time.sleep(1.0)
-    bp+=30
-        
-        
-            
-    #creation      
-    if sf.Mouse.is_button_pressed(sf.Mouse.LEFT) and mouseOn==-1 and onbutton ==0:
+    bp += 30
+
+    # Create new neuron
+    if pygame.mouse.get_pressed()[0] and mouseOn == -1 and onbutton == 0:
         print("mouse down")
-        
         ann.neurons.append(Neuron(ann.maxN))
-        
-        ann.neurons[ann.maxN].pos=mPos#!!!!!!!!!!! pec load inga japievieno ci ir max neuroni beigas
-        
-        ann.maxN+=1
-        
-        print (str(onbutton))
-        
-        time.sleep(0.3)  
-    
-    #moovings
-    
-    if sf.Mouse.is_button_pressed(sf.Mouse.LEFT) and mouseOn>=0 :
-        old =ann.neurons[mouseOn].pos
-        ann.neurons[mouseOn].pos=mPos
-        
+        ann.neurons[ann.maxN].pos = vector2d(mPos.x, mPos.y)
+        ann.maxN += 1
+        time.sleep(0.3)
+
+    # Move neurons
+    if pygame.mouse.get_pressed()[0] and mouseOn >= 0:
+        old = ann.neurons[mouseOn].pos
+        ann.neurons[mouseOn].pos = vector2d(mPos.x, mPos.y)
+        distX = vector2d(mPos.x - old.x, mPos.y - old.y)
         for ch in ann.neurons[mouseOn].lowest:
-            
-            distX=ann.neurons[mouseOn].pos-old
-            
-            #if(ch!=ann.neurons[mouseOn].nid):ann.neurons[ch].pos+=distX
-            ann.neurons[ch].pos+=distX
-            
-        
-        
-        selected=mouseOn
-        
-    
-    
-    #conectings
-    if  sf.Mouse.is_button_pressed(sf.Mouse.RIGHT) and mouseOn>=0 and cswitch==0:
-        print("right mb pressed on. "+str(mouseOn))
-        cstate=mouseOn
-        cswitch=1
-     
-            
-    if  not sf.Mouse.is_button_pressed(sf.Mouse.RIGHT) and mouseOn==-1 and cswitch==1 :
-        cstate=-1
-        cswitch=2
-        
-    if  sf.Mouse.is_button_pressed(sf.Mouse.RIGHT) and mouseOn>=0 and cswitch==2:
-        cstate=-1
-        cswitch=0
-    
-    
-    if  sf.Mouse.is_button_pressed(sf.Mouse.RIGHT) and mouseOn>=0 and cstate >=0 and cstate !=mouseOn and cswitch==1 :
-        print("right mb pressed on. "+str(mouseOn))
-        ann.neurons[mouseOn].conectInToOut(cstate,0,1,0)
+            ann.neurons[ch].pos = vector2d(
+                ann.neurons[ch].pos.x + distX.x,
+                ann.neurons[ch].pos.y + distX.y
+            )
+        selected = mouseOn
+
+    # Handle connections
+    if pygame.mouse.get_pressed()[2] and mouseOn >= 0 and cswitch == 0:
+        print("right mb pressed on. " + str(mouseOn))
+        cstate = mouseOn
+        cswitch = 1
+
+    if not pygame.mouse.get_pressed()[2] and mouseOn == -1 and cswitch == 1:
+        cstate = -1
+        cswitch = 2
+
+    if pygame.mouse.get_pressed()[2] and mouseOn >= 0 and cswitch == 2:
+        cstate = -1
+        cswitch = 0
+
+    if pygame.mouse.get_pressed()[2] and mouseOn >= 0 and cstate >= 0 and cstate != mouseOn and cswitch == 1:
+        print("right mb pressed on. " + str(mouseOn))
+        ann.neurons[mouseOn].conectInToOut(cstate, 0, 1, 0)
         ann.neurons[cstate].child.append(mouseOn)
         ann.neurons[mouseOn].parent.append(cstate)
         ann.sort()
-        
-        cstate=-1
-        cswitch=2
-    
-        
-            
-        
-        
-        
-            
-    if  cswitch==1:
-        line(ann.neurons[cstate].pos, mPos)  
-        
-    if  cswitch==2 and mouseOn==-1:
-        cswitch=0
-    
-    text("cstate="+str(cstate)+"; cswitch="+str(cswitch)+"; mouseon="+str(mouseOn), sf.Vector2(100,10), sf.Color.WHITE, 18)    
+        cstate = -1
+        cswitch = 2
 
-    #draw mouse
-    circle(mPos,4, 1.0)
-    
-        
-    
-  
-      
-    w.display() # update the window  
+    if cswitch == 1:
+        line(ann.neurons[cstate].pos, mPos)
+
+    if cswitch == 2 and mouseOn == -1:
+        cswitch = 0
+
+    # Draw status text
+    text("cstate=" + str(cstate) + "; cswitch=" + str(cswitch) + "; mouseon=" + str(mouseOn), vector2d(100, 10), (255, 255, 255), 18)
+
+    # Draw mouse cursor
+    circle(mPos, 4, 1.0)
+
+    pygame.display.flip()  # Update the display

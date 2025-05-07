@@ -1,39 +1,34 @@
+import pygame
 from shared import *
 import gfx as gx
 
-step=0
+# Initialize global variables
+step = 0
+Ann = NeuralNetwork(0)
 
-Ann=NeuralNetwork(0)
-
+# Display initial status
 gx.status(Ann)
-
-
-
-
-
-
 
 def AnnStep():
     global step
-    step+=1
-    if step>4:
-        step=0
+    step += 1
+    if step > 4:
+        step = 0
         for n in Ann.neurons:
             for c in n.conection:
-                c.value=Ann.neurons[c.to].out
-                v=n.output()
-        
-            
-    
+                c.value = Ann.neurons[c.to].out
+                n.output()
 
-while gx.w.is_open:    
-    
+# Main loop
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
     AnnStep()
-        
     gx.clear()
-       
     gx.gloop(Ann)
-    
-    
-    a=1
-    
+
+# Cleanup
+pygame.quit()
