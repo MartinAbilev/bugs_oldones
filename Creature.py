@@ -214,7 +214,7 @@ class objectA:
                 childAnn.saveNet("child")
                 giveBirth(self)
         else:
-            self.body.active = 0
+            self.body.active = False
             self.time = 0
             self.Ann = []
 
@@ -291,7 +291,7 @@ while running:
     for obj in objects:
         obj.sense()
         if obj.death == 1:
-            obj.body.active = 0
+            obj.body.active = False
             objects.remove(obj)
 
     # Draw text overlays
