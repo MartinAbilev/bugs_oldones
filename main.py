@@ -4,7 +4,7 @@ import gfx as gx
 
 # Initialize global variables
 step = 0
-Ann = NeuralNetwork(0)
+Ann = Ann2(0)
 
 # Display initial status
 gx.status(Ann)

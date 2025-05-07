@@ -173,7 +173,7 @@ def gloop(ann):
     # Create new neuron
     if pygame.mouse.get_pressed()[0] and mouseOn == -1 and onbutton == 0:
         print("mouse down")
-        ann.neurons.append(Neuron(ann.maxN))
+        ann.neurons.append(Neuron2(ann.maxN))
         ann.neurons[ann.maxN].pos = vector2d(mPos.x, mPos.y)
         ann.maxN += 1
         time.sleep(0.3)
