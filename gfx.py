@@ -1,6 +1,6 @@
 import time
 import pygame
-from shared import *  # Assuming this includes Neuron, NeuralNetwork, etc.
+from NeuralNetwork import *  # Assuming this includes Neuron, NeuralNetwork, etc.
 
 # Define vector2d class to replace sf.Vector2
 class vector2d(object):
