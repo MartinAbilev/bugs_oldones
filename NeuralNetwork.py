@@ -23,10 +23,10 @@ class Neuron2:
         value = 0
         i = 0
         for con in self.conections:
-            value += self.weights[i] * OutDatta[con]
+            value += self.weights[i] * OutDatta[con].out
             i += 1
         self.out = math.tanh(value * 5)
-        OutDatta[self.id] = self.out
+        OutDatta[self.id].out = self.out
         return OutDatta
 
 class Ann2:
@@ -37,21 +37,24 @@ class Ann2:
         self.colorB = 0
         self.poly = []
         self.neurons = []
-        self.outDatta = []
+
+        # GOT NO IDEA WHY I MAKE SEPARATE OUTS AARAY PROBABLY NEED TO OPTIMIZE AND REMOVE
+        # self.outDatta = []
 
     def setPoly(self, p):
         self.poly = p
 
     def annStep(self):
         for neuron in self.neurons:
-            self.outDatta = neuron.step(self.outDatta)
+            self.neurons = neuron.step(self.neurons)
 
     def connect(self, inpA, toB, w):
         self.neurons[inpA].conections.append(toB)
         self.neurons[inpA].weights.append(w)
 
+    # WHEN INPUT ACTIVATED IT SETS OUTS ARRAY AND NURON VALUE TO 1
     def outSet(self, Id, value):
-        self.outDatta[Id] = value
+        # self.outDatta[Id] = value
         self.neurons[Id].out = value
 
     def createGrid(self, n):
@@ -104,7 +107,7 @@ class Ann2:
 
     def loadNet(self, fname):
         self.neurons = []
-        self.outDatta = []
+        # self.outDatta = []
         f = open(fname + 'DNA.txt', 'r')
         str = f.readlines()
         f.close()
@@ -143,7 +146,7 @@ class Ann2:
         i = 0
         for neuron in neuronDatta:
             self.neurons.append(Neuron2(i))
-            self.outDatta.append(0)
+            # self.outDatta.append(0)
             self.neurons[i].id = int(neuron[1])
             xy = neuron[2].split(',')
             self.neurons[i].pos = vector2d(float(xy[0]), float(xy[1]))
