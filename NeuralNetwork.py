@@ -1,6 +1,5 @@
 import math
 import random
-import time
 import json
 
 class vector2d(object):
