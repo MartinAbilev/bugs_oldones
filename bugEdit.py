@@ -1,23 +1,13 @@
 import pygame
-from shared import *
+from NeuralNetwork import *
 import gfx as gx
 
 # Initialize global variables
 step = 0
-Ann = Ann2(0)
+Ann = Ann2()
 
 # Display initial status
 gx.status(Ann)
-
-def AnnStep():
-    global step
-    step += 1
-    if step > 4:
-        step = 0
-        for n in Ann.neurons:
-            for c in n.conection:
-                c.value = Ann.neurons[c.to].out
-                n.output()
 
 # Main loop
 running = True
@@ -26,7 +16,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-    AnnStep()
+    Ann.annStep()
     gx.clear()
     gx.gloop(Ann)
 

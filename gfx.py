@@ -33,9 +33,7 @@ def cDist(pos1, pos2):
     return ((pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2) ** 0.5
 
 def status(ann):
-    print(ann.maxN)
-    print(ann.a)
-    print(ann.b)
+
     global cstate
 
 def clear():
@@ -122,13 +120,13 @@ def gloop(ann):
 
     # Draw connections
     for neuron in ann.neurons:
-        for c in neuron.conection:
-            line(neuron.pos, ann.neurons[c.to].pos)
+        for c in neuron.conections:
+            line(neuron.pos, ann.neurons[c].pos)
 
     # Draw neurons and text
     for neuron in ann.neurons:
         if circle(neuron.pos, 16, 255 * neuron.out) == 1:
-            mouseOn = neuron.nid
+            mouseOn = neuron.id
         text(str(round(neuron.out, 3)), neuron.pos, (255, 0, 0), 8)
 
     # Draw buttons
@@ -141,7 +139,7 @@ def gloop(ann):
 
     if button("load", vector2d(10, bp)) == 1 and pygame.mouse.get_pressed()[0]:
         print("load")
-        ann.loadNet()
+        ann.loadNet('Best')
         time.sleep(1)
     bp += 30
 
@@ -206,10 +204,10 @@ def gloop(ann):
 
     if pygame.mouse.get_pressed()[2] and mouseOn >= 0 and cstate >= 0 and cstate != mouseOn and cswitch == 1:
         print("right mb pressed on. " + str(mouseOn))
-        ann.neurons[mouseOn].conectInToOut(cstate, 0, 1, 0)
+        ann.connect(mouseOn, cstate, 1)
         ann.neurons[cstate].child.append(mouseOn)
         ann.neurons[mouseOn].parent.append(cstate)
-        ann.sort()
+        # ann.sort()
         cstate = -1
         cswitch = 2
 

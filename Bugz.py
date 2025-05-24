@@ -2,7 +2,6 @@
 import pygame
 import numpy as np
 from Box2D import *
-import time
 import math
 from NeuralNetwork import *
 
