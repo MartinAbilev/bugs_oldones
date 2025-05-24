@@ -1,7 +1,7 @@
-# NeuralNetwork.py
 import math
 import random
 import time
+import json
 
 class vector2d(object):
     def __init__(self, X, Y):
@@ -49,7 +49,6 @@ class Ann2:
         self.neurons[inpA].conections.append(toB)
         self.neurons[inpA].weights.append(w)
 
-    # WHEN INPUT ACTIVATED IT SETS NURON VALUE TO 1
     def outSet(self, Id, value):
         self.neurons[Id].out = value
 
@@ -103,118 +102,56 @@ class Ann2:
 
     def loadNet(self, fname):
         self.neurons = []
-        f = open(fname + 'DNA.txt', 'r')
-        str = f.readlines()
-        f.close()
-        content = []
-        for s in str:
-            s = s.replace('\n', ' ').replace('\r', '')
-            content.append(s)
-        scol = content[0].split(',')
-        self.colorR = int(scol[0])
-        self.colorG = int(scol[1])
-        self.colorB = int(scol[2])
-        str = content
-        str.pop(0)
-        for line in str:
-            if "poly" in line:
-                str.pop(0)
-                while not "endPoly" in str[0]:
-                    spoly = str[0].split(',')
-                    x = float(spoly[0])
-                    y = float(spoly[1])
-                    p = [(x), (y)]
-                    self.poly.append(p)
-                    str.pop(0)
-        f = open(fname + '.txt', 'r')
-        content = f.readlines()
-        f.close()
-        neuronDatta = []
-        neuronStr = []
-        for str in content:
-            str = str.replace('\n', ' ').replace('\r', '')
-            if "ID" in str:
-                neuronDatta.append(neuronStr)
-                neuronStr = []
-            neuronStr.append(str)
-        neuronDatta.pop(0)
-        i = 0
-        for neuron in neuronDatta:
-            self.neurons.append(Neuron2(i))
-            self.neurons[i].id = int(neuron[1])
-            xy = neuron[2].split(',')
-            self.neurons[i].pos = vector2d(float(xy[0]), float(xy[1]))
-            neuron.pop(0)
-            neuron.pop(0)
-            neuron.pop(0)
-            for line in neuron:
-                if "conected Inputs" in line:
-                    while not "child nodes" in neuron[0]:
-                        neuron.pop(0)
-                        conecto = int(neuron[0])
-                        neuron.pop(0)
-                        val = float(neuron[0])
-                        neuron.pop(0)
-                        weight = float(neuron[0])
-                        neuron.pop(0)
-                        error = float(neuron[0])
-                        neuron.pop(0)
-                        self.connect(i, conecto, weight)
-            for line in neuron:
-                if "child nodes" in line:
-                    neuron.pop(0)
-                    while not "parent nodes" in neuron[0]:
-                        self.neurons[i].child.append(int(neuron[0]))
-                        neuron.pop(0)
-            for line in neuron:
-                if "parent nodes" in line:
-                    neuron.pop(0)
-                    while not "lowest conected nodes" in neuron[0]:
-                        self.neurons[i].parent.append(int(neuron[0]))
-                        neuron.pop(0)
-            for line in neuron:
-                if "lowest conected nodes" in line:
-                    neuron.pop(0)
-                    while not "end" in neuron[0]:
-                        self.neurons[i].lowest.append(int(neuron[0]))
-                        neuron.pop(0)
-                    neuron.pop(0)
-            i += 1
-        self.maxN = i
+        with open(fname + '.json', 'r') as f:
+            data = json.load(f)
+
+        # Load colors
+        self.colorR = data['colorR']
+        self.colorG = data['colorG']
+        self.colorB = data['colorB']
+
+        # Load poly
+        self.poly = [[float(p[0]), float(p[1])] for p in data['poly']]
+
+        # Load neurons
+        for neuron_data in data['neurons']:
+            neuron = Neuron2(neuron_data['id'])
+            neuron.pos = vector2d(float(neuron_data['pos']['x']), float(neuron_data['pos']['y']))
+            neuron.conections = neuron_data['conections']
+            neuron.weights = neuron_data['weights']
+            neuron.child = neuron_data['child']
+            neuron.parent = neuron_data['parent']
+            neuron.lowest = neuron_data['lowest']
+            self.neurons.append(neuron)
+
+        self.maxN = len(self.neurons)
 
     def saveNet(self, fname):
-        f = open(fname + 'DNA.txt', 'w')
-        f.write("{0}, {1}, {2}\n".format(self.colorR, self.colorG, self.colorB))
-        f.write("poly\n")
-        for poly in self.poly:
-            f.write("{0}, {1}\n".format(poly[0], poly[1]))
-        f.write("endPoly\n")
-        f.close()
-        f = open(fname + '.txt', 'w')
+        # Prepare data structure for JSON
+        data = {
+            'colorR': self.colorR,
+            'colorG': self.colorG,
+            'colorB': self.colorB,
+            'poly': [[float(p[0]), float(p[1])] for p in self.poly],
+            'neurons': []
+        }
+
+        # Serialize neuron data
         for neuron in self.neurons:
-            f.write("ID----------------------------------------------------\n")
-            f.write("%s\n" % neuron.id)
-            f.write("%s,%s\n" % (neuron.pos.x, neuron.pos.y))
-            i = 0
-            for con in neuron.conections:
-                f.write("conected Inputs\n")
-                f.write("%s\n" % con)
-                f.write("%s\n" % 0)
-                f.write("%s\n" % neuron.weights[i])
-                f.write("%s\n" % 666)
-                i += 1
-            f.write("child nodes\n")
-            for ch in neuron.child:
-                f.write("%s\n" % ch)
-            f.write("parent nodes\n")
-            for pr in neuron.parent:
-                f.write("%s\n" % pr)
-            f.write("lowest conected nodes\n")
-            for low in neuron.lowest:
-                f.write("%s\n" % low)
-            f.write("end\n")
-        f.write("ID----------------------------------------------------\n")
-        f.close()
+            neuron_data = {
+                'id': neuron.id,
+                'pos': {'x': float(neuron.pos.x), 'y': float(neuron.pos.y)},
+                'conections': neuron.conections,
+                'weights': neuron.weights,
+                'child': neuron.child,
+                'parent': neuron.parent,
+                'lowest': neuron.lowest
+            }
+            data['neurons'].append(neuron_data)
+
+        # Write to JSON file
+        with open(fname + '.json', 'w') as f:
+            json.dump(data, f, indent=4)
 
     def randomizeDNA(self, factor):
         rnd = random.randint(-100, 100)
