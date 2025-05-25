@@ -2,6 +2,7 @@
     "colorR": 255,
     "colorG": 0,
     "colorB": 0,
+    "hiddenSize": 9,
     "poly": [
         [
             20.0,

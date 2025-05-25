@@ -32,7 +32,7 @@ except Exception as e:
 annRecord = 0
 cnext = 0
 max = 0
-gr = 3 * 3 # this need to be read from saved file
+# gr = 3 * 3 # this need to be read from saved file
 lifeTimeRecord = 0
 objects = []
 
@@ -167,7 +167,7 @@ class objectA:
             colors = []
             for i in range(len(self.poly)):
                 colors.append(self.readColor(pixel_array, centerpos2, i))
-            global gr
+            gr = self.Ann.hiddenSize
             for i in range(len(self.poly)):
                 self.Ann.outSet(i + gr, colors[i].r)
             self.Ann.outSet(len(self.poly) + gr, self.body.angularVelocity)
@@ -204,7 +204,7 @@ class objectA:
             rot = self.angle()
             self.poly = self.Ann.poly
             self.poly = rotatePolygon(self.poly, rot)
-            global gr
+            gr = self.Ann.hiddenSize
             dcircle(surface, pos, rot, self.r, 255, self.Ann.colorG, self.Ann.colorB)
             dcircle(surface, vector2d(self.centerpos.x + 2, self.centerpos.y + 2), rot, 2, 0, 255, 0)
             for i in range(len(self.poly)):

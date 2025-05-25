@@ -11,6 +11,7 @@ class Neuron2:
     def __init__(self, Id):
         self.id = Id
         self.type = 0
+        self.hiddenSize = 0
         self.conections = []
         self.weights = []
         self.out = 0.001
@@ -54,6 +55,7 @@ class Ann2:
 
     # the sequence how nns are creted important grid inputs and outputs !!!
     def createGrid(self, n):
+        self.hiddenSize = n * n
         i = self.maxN
         offsetX = 200
         offsetY = 200
@@ -119,6 +121,9 @@ class Ann2:
         self.colorG = data['colorG']
         self.colorB = data['colorB']
 
+        # hiddenSize
+        self.hiddenSize = data['hiddenSize']
+
         # Load poly
         self.poly = [[float(p[0]), float(p[1])] for p in data['poly']]
 
@@ -141,6 +146,7 @@ class Ann2:
             'colorR': self.colorR,
             'colorG': self.colorG,
             'colorB': self.colorB,
+            'hiddenSize': self.hiddenSize,
             'poly': [[float(p[0]), float(p[1])] for p in self.poly],
             'neurons': []
         }
