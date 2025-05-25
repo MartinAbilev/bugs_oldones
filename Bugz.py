@@ -32,7 +32,6 @@ except Exception as e:
 annRecord = 0
 cnext = 0
 max = 0
-# gr = 3 * 3 # this need to be read from saved file
 lifeTimeRecord = 0
 objects = []
 
