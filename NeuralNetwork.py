@@ -10,6 +10,7 @@ class vector2d(object):
 class Neuron2:
     def __init__(self, Id):
         self.id = Id
+        self.type = 0
         self.conections = []
         self.weights = []
         self.out = 0.001
@@ -51,15 +52,17 @@ class Ann2:
     def outSet(self, Id, value):
         self.neurons[Id].out = value
 
+    # the sequence how nns are creted important grid inputs and outputs !!!
     def createGrid(self, n):
         i = self.maxN
         offsetX = 200
-        offsetY = 100
+        offsetY = 200
         for y in range(n):
             for x in range(n):
                 self.neurons.append(Neuron2(self.maxN))
                 self.neurons[self.maxN].pos.x = offsetX + (x * 60)
                 self.neurons[self.maxN].pos.y = offsetY + (y * 60)
+                self.neurons[self.maxN].type = 0
                 self.maxN += 1
         for neuron in self.neurons:
             if neuron.id >= i:
@@ -71,16 +74,20 @@ class Ann2:
         i = self.maxN
         offsetX = 100
         offsetY = 100
+        print('Creating inputs.', n)
         for y in range(n):
             for x in range(1):
                 self.neurons.append(Neuron2(self.maxN))
                 self.neurons[self.maxN].pos.x = offsetX + (x * 60)
                 self.neurons[self.maxN].pos.y = offsetY + (y * 60)
+                self.neurons[self.maxN].type = 1
                 self.maxN += 1
         for neuron in self.neurons:
-            if neuron.id < i:
+            if neuron.id < i: # so its all hiden ones starting from 0..gr
                 for con in self.neurons:
-                    if con.id >= i:
+                    if con.id >= i: # to its all ones starting from inputs
+                        print('input conected', neuron.id, con.id)
+                        # input appended as to every hoden con
                         self.connect(neuron.id, con.id, 1)
 
     def createOutputs(self, n):
@@ -92,11 +99,14 @@ class Ann2:
                 self.neurons.append(Neuron2(self.maxN))
                 self.neurons[self.maxN].pos.x = offsetX + (x * 60)
                 self.neurons[self.maxN].pos.y = offsetY + (y * 60)
+                self.neurons[self.maxN].type = 2
                 self.maxN += 1
         for neuron in self.neurons:
-            if neuron.id < i:
+            if neuron.id < i: # so every  nuron starting from 0..out
                 for con in self.neurons:
-                    if con.id >= i:
+                    if con.id >= i: # to its all ones starting from outputs
+                        print('output conected', con.id, neuron.id)
+                        # so every nuron is appended to out con
                         self.connect(con.id, neuron.id, 1)
 
     def loadNet(self, fname):
@@ -139,6 +149,7 @@ class Ann2:
         for neuron in self.neurons:
             neuron_data = {
                 'id': neuron.id,
+                'type': neuron.type,
                 'pos': {'x': float(neuron.pos.x), 'y': float(neuron.pos.y)},
                 'conections': neuron.conections,
                 'weights': neuron.weights,

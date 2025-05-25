@@ -8,7 +8,7 @@ from NeuralNetwork import *
 # Initialize Pygame
 pygame.init()
 w = pygame.display.set_mode((640, 480))
-pygame.display.set_caption("My first Pygame Window - or not ?")
+pygame.display.set_caption("BUGZ ANN")
 clock = pygame.time.Clock()  # For frame rate control
 
 # Create background surface for static boundaries
@@ -32,7 +32,7 @@ except Exception as e:
 annRecord = 0
 cnext = 0
 max = 0
-gr = 3 * 3
+gr = 3 * 3 # this need to be read from saved file
 lifeTimeRecord = 0
 objects = []
 
