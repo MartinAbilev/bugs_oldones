@@ -35,6 +35,10 @@ cnext = 0
 max = 0
 lifeTimeRecord = 0
 objects = []
+radiation = 1.0
+radiation_slider_dragging = False
+radiation_slider = pygame.Rect(510, 82, 115, 12)
+radiation_slider_hitbox = pygame.Rect(505, 65, 130, 35)
 
 # Vector2d class to replace sf.Vector2
 class vector2d(object):
@@ -217,7 +221,7 @@ class objectA:
             if self.birthTimer > 300:
                 self.birthTimer = 0
                 childAnn = copy.deepcopy(self.Ann)
-                childAnn.randomizeWeights(0.1)
+                childAnn.randomizeWeights(radiation)
                 childAnn.saveNet("child")
                 giveBirth(self)
         else:
@@ -305,7 +309,7 @@ def createNext():
     for obj in objects:
         if obj.death == 0:
             if obj.oId <= max + 3:
-                obj.Ann.randomizeWeights(1)
+                obj.Ann.randomizeWeights(radiation)
 
 # Main game loop
 running = True
@@ -330,6 +334,17 @@ while running:
     # Handle input and update creatures
     right_click = pygame.mouse.get_pressed()[2]
     left_click = pygame.mouse.get_pressed()[0]
+    if not left_click:
+        radiation_slider_dragging = False
+    elif radiation_slider_dragging or radiation_slider_hitbox.collidepoint(mouse_pos):
+        radiation_slider_dragging = True
+        slider_position = (mouse_pos[0] - radiation_slider.left) / radiation_slider.width
+        if slider_position < 0:
+            slider_position = 0
+        elif slider_position > 1:
+            slider_position = 1
+        radiation = round(slider_position * 2 * 20) / 20
+        left_click = False
     if right_click:
         lifeTimeRecord = 0
 
@@ -349,7 +364,7 @@ while running:
         if obj.death == 0:
             obj.sense(pixel_array)
             if left_click:
-                obj.Ann.randomizeWeights(0.1)
+                obj.Ann.randomizeWeights(radiation)
         if obj.death == 1:
             obj.body.active = False
             to_remove.append(obj)
@@ -392,6 +407,23 @@ while running:
                     (cr, cg, 100), 8
                 )
                 j += 1
+
+    text(w, f"Radiation: {radiation:.2f}x", vector2d(505, 73), (255, 255, 255), 12)
+    pygame.draw.rect(w, (80, 80, 80), radiation_slider)
+    fill_width = round(radiation_slider.width * radiation / 2)
+    pygame.draw.rect(
+        w,
+        (255, 180, 0),
+        (radiation_slider.left, radiation_slider.top, fill_width, radiation_slider.height),
+    )
+    pygame.draw.rect(w, (220, 220, 220), radiation_slider, 1)
+    knob_x = radiation_slider.left + fill_width
+    pygame.draw.circle(
+        w,
+        (255, 255, 255),
+        (knob_x, radiation_slider.centery),
+        6,
+    )
 
     # Update physics
     wrld.world.Step(wrld.timeStep, 32, 32)

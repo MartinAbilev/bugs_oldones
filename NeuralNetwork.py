@@ -265,18 +265,8 @@ class Ann2:
             json.dump(data, f, indent=4)
 
     def randomizeDNA(self, factor):
-        rnd = random.randint(-100, 100)
-        self.colorG += rnd
-        if self.colorG > 255:
-            self.colorG = 255
-        if self.colorG < 0:
-            self.colorG = 0
-        rnd = random.randint(-100, 100)
-        self.colorB += rnd
-        if self.colorB > 255:
-            self.colorB = 255
-        if self.colorB < 0:
-            self.colorB = 0
+        self.colorG = max(0, min(255, round(self.colorG + random.randint(-100, 100) * factor)))
+        self.colorB = max(0, min(255, round(self.colorB + random.randint(-100, 100) * factor)))
         i = 0
         for pol in self.poly:
             rnd = random.randint(-1, 1) * factor
@@ -317,7 +307,10 @@ class Ann2:
                 )
 
     def randomizeWeights(self, factor):
-        self.randomizeDNA(max(factor, 1.0))
+        if factor <= 0:
+            return
+
+        self.randomizeDNA(factor)
         for neuron in self.neurons:
             i = 0
             for weight in neuron.weights:
