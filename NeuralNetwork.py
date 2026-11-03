@@ -130,6 +130,7 @@ class Ann2:
         # Load neurons
         for neuron_data in data['neurons']:
             neuron = Neuron2(neuron_data['id'])
+            neuron.type = neuron_data['type']
             neuron.pos = vector2d(float(neuron_data['pos']['x']), float(neuron_data['pos']['y']))
             neuron.conections = neuron_data['conections']
             neuron.weights = neuron_data['weights']
