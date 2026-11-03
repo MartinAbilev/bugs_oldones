@@ -86,7 +86,7 @@ def text(surface, msg, pos, c, size):
 def uiText(surface, message, position, color, font):
     surface.blit(font.render(message, True, color), position)
 
-def drawDashboard(surface, active_objects, record, mutation_rate):
+def drawDashboard(surface, active_objects, best_live, record, mutation_rate):
     panel = pygame.Rect(505, 0, 135, 480)
     pygame.draw.rect(surface, (10, 17, 29), panel)
     pygame.draw.line(surface, (25, 54, 68), (505, 0), (505, 480), 2)
@@ -124,8 +124,14 @@ def drawDashboard(surface, active_objects, record, mutation_rate):
     uiText(surface, "FIELD STATUS", (522, 189), (130, 158, 177), ui_font_10)
     uiText(surface, "ALIVE", (522, 207), (114, 139, 158), ui_font_10)
     uiText(surface, f"{active_objects:02d}", (582, 202), (90, 232, 198), ui_font_14)
-    uiText(surface, "BEST LIFE", (522, 232), (114, 139, 158), ui_font_10)
-    uiText(surface, f"{record:05d}", (582, 227), (235, 248, 255), ui_font_14)
+    uiText(surface, "BEST / RECORD", (522, 232), (114, 139, 158), ui_font_10)
+    uiText(
+        surface,
+        f"{best_live:03d} / {record:03d}",
+        (522, 246),
+        (235, 248, 255),
+        ui_font_10,
+    )
 
     pygame.draw.rect(surface, (15, 25, 39), (513, 274, 119, 119), border_radius=8)
     pygame.draw.rect(surface, (28, 57, 70), (513, 274, 119, 119), 1, border_radius=8)
@@ -502,7 +508,11 @@ while running:
     for obj in to_remove:
         objects.remove(obj)
 
-    drawDashboard(w, alive, lifeTimeRecord, radiation)
+    best_live_time = 0
+    for obj in objects:
+        if obj.death == 0 and obj.time > best_live_time:
+            best_live_time = obj.time
+    drawDashboard(w, alive, best_live_time, lifeTimeRecord, radiation)
     if mouse_pos[0] < 500 and mouse_pos[1] < 400:
         pygame.draw.circle(w, (70, 235, 220), (int(mPos.x), int(mPos.y)), 4, 1)
         pygame.draw.line(w, (70, 235, 220), (mPos.x - 7, mPos.y), (mPos.x + 7, mPos.y), 1)
