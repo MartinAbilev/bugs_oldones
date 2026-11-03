@@ -286,9 +286,38 @@ class Ann2:
             L[1] += rnd
             self.poly[i] = L
             i += 1
+        self.syncMorphologyPositions()
+
+    def syncMorphologyPositions(self):
+        center_x = 320
+        center_y = 240
+        max_poly_extent = max(
+            40,
+            max(
+                (abs(float(coordinate)) for point in self.poly for coordinate in point),
+                default=0,
+            ),
+        )
+        sensor_start = self.hiddenSize
+        output_start = min(sensor_start + len(self.poly) + 2, len(self.neurons))
+
+        for index, (x, y) in enumerate(self.poly):
+            sensor_index = sensor_start + index
+            if sensor_index < len(self.neurons):
+                self.neurons[sensor_index].pos = vector2d(
+                    center_x + float(x) * 185 / max_poly_extent,
+                    center_y + float(y) * 185 / max_poly_extent,
+                )
+
+            output_index = output_start + index
+            if index < 4 and output_index < len(self.neurons):
+                self.neurons[output_index].pos = vector2d(
+                    center_x + float(x) * 225 / max_poly_extent,
+                    center_y + float(y) * 225 / max_poly_extent,
+                )
 
     def randomizeWeights(self, factor):
-        self.randomizeDNA(0.1)
+        self.randomizeDNA(max(factor, 1.0))
         for neuron in self.neurons:
             i = 0
             for weight in neuron.weights:

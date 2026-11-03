@@ -1,4 +1,5 @@
 # Bugz.py
+import copy
 import pygame
 import numpy as np
 from Box2D import *
@@ -215,7 +216,7 @@ class objectA:
             self.birthTimer += 1
             if self.birthTimer > 300:
                 self.birthTimer = 0
-                childAnn = self.Ann
+                childAnn = copy.deepcopy(self.Ann)
                 childAnn.randomizeWeights(0.1)
                 childAnn.saveNet("child")
                 giveBirth(self)
