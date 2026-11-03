@@ -1,4 +1,3 @@
-import time
 import pygame
 from NeuralNetwork import *  # Assuming this includes Neuron, NeuralNetwork, etc.
 
@@ -11,11 +10,24 @@ class vector2d(object):
 # Initialize Pygame
 pygame.init()
 w = pygame.display.set_mode((640, 480))
-pygame.display.set_caption("CYBERMIND v0.1")
+pygame.display.set_caption("BUGZ // NEURAL LAB")
+background = pygame.Surface((640, 480))
+background.fill((7, 12, 21))
+for grid_x in range(25, 505, 25):
+    pygame.draw.line(background, (11, 24, 35), (grid_x, 0), (grid_x, 480))
+for grid_y in range(25, 480, 25):
+    pygame.draw.line(background, (11, 24, 35), (0, grid_y), (505, grid_y))
+pygame.draw.rect(background, (20, 190, 185), (1, 1, 502, 478), 2)
+pygame.draw.rect(background, (10, 17, 29), (505, 0, 135, 480))
+pygame.draw.line(background, (25, 54, 68), (505, 0), (505, 480), 2)
 
 # Load font
 try:
     font = pygame.font.SysFont("arial", 16)
+    ui_font_9 = pygame.font.SysFont("arial", 9)
+    ui_font_10 = pygame.font.SysFont("arial", 10)
+    ui_font_12 = pygame.font.SysFont("arial", 12, bold=True)
+    ui_font_18 = pygame.font.SysFont("arial", 18, bold=True)
 except Exception as e:
     print("Font error:", e)
     exit(1)
@@ -37,7 +49,7 @@ def status(ann):
     global cstate
 
 def clear():
-    w.fill((0, 0, 0))  # Clear screen with black
+    w.blit(background, (0, 0))
 
 def circle(pos, r, c):
     global mPos
@@ -150,59 +162,52 @@ def connectionColor(weight, min_weight, max_weight):
         brightness = round(40 + normalized * 215)
     return (brightness, brightness, brightness)
 
-def square(a, b):
-    rect = pygame.Rect(a.x, a.y, b.x - a.x, b.y - a.y)
-    pygame.draw.rect(w, (255, 255, 255), rect, 1)
-    if a.x < mPos.x < b.x and a.y < mPos.y < b.y:
-        return 1
-    return 0
-
 def text(msg, pos, c, s):
-    global font
-    font_size = s
-    text_font = pygame.font.SysFont("arial", font_size)
+    text_font = font if s == 16 else ui_font_9 if s <= 10 else ui_font_10
     text_surface = text_font.render(msg, True, c)
     w.blit(text_surface, (pos.x + 16, pos.y - 11))
 
-def button(name, pos):
-    global onbutton
-    pos_b = vector2d(pos.x + 4 * 16, pos.y + 16)
-    if square(pos, pos_b) == 1:
-        col = (255, 0, 0)  # Red
-        bool_val = 1
-        onbutton = 1
-    else:
-        col = (255, 255, 255)  # White
-        bool_val = 0
-    offset = vector2d(0, 8)
-    text(name, vector2d(pos.x + offset.x, pos.y + offset.y), col, 16)
-    return bool_val
+def drawButton(name, rect, mouse_pos):
+    hovered = rect.collidepoint(mouse_pos)
+    fill = (28, 57, 70) if hovered else (15, 25, 39)
+    edge = (70, 220, 205) if hovered else (35, 75, 88)
+    pygame.draw.rect(w, fill, rect, border_radius=5)
+    pygame.draw.rect(w, edge, rect, 1, border_radius=5)
+    label = ui_font_9.render(name, True, (225, 242, 245) if hovered else (157, 190, 200))
+    w.blit(label, label.get_rect(center=rect.center))
+    return hovered
 
 def gui(ann):
     pass  # Placeholder if needed
 
 def gloop(ann, events):
-    global mPos, mouseOn, cstate, cswitch, selected, onbutton
+    global w, mPos, mouseOn, cstate, cswitch, selected, onbutton
     onbutton = 0
 
-    # Update mouse position
     mouse_pos = pygame.mouse.get_pos()
     mPos = vector2d(mouse_pos[0], mouse_pos[1])
 
-    # Handle events
     for event in events:
         if event.type == pygame.VIDEORESIZE:
             w = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
-            pygame.display.set_caption("CYBERMIND v0.1")
+            pygame.display.set_caption("BUGZ // NEURAL LAB")
         if event.type == pygame.MOUSEWHEEL:
             if mouseOn >= 0:
                 ann.neurons[mouseOn].out += event.y * 0.1
 
-    # Reset mouseOn if left mouse button is not pressed
-    if not pygame.mouse.get_pressed()[0]:
+    left_down = pygame.mouse.get_pressed()[0]
+    right_down = pygame.mouse.get_pressed()[2]
+    left_clicks = [
+        event.pos
+        for event in events
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1
+    ]
+
+    if not left_down:
         mouseOn = -1
 
-    # Draw connections with brightness normalized across the network's weights.
+    # Keep graph drawing out of the dashboard region.
+    w.set_clip(pygame.Rect(0, 0, 505, 480))
     weights = [weight for neuron in ann.neurons for weight in neuron.weights]
     min_weight = min(weights, default=0)
     max_weight = max(weights, default=0)
@@ -215,92 +220,104 @@ def gloop(ann, events):
                 connectionColor(weight, min_weight, max_weight),
             )
 
-    # Draw hidden neurons as circles, sensors as triangles, and thrusters as squares.
     for index, neuron in enumerate(ann.neurons):
         if drawNeuron(neuron.pos, 16, neuron.out, neuronShape(ann, index)):
             mouseOn = neuron.id
         text(str(round(neuron.out, 3)), neuron.pos, (255, 0, 0), 8)
 
-    # Draw buttons
-    bp = 10
-    if button("save", vector2d(10, bp)) == 1 and pygame.mouse.get_pressed()[0]:
-        print("save")
-        ann.saveNet('Best')
-        time.sleep(1)
-    bp += 30
-
-    if button("load", vector2d(10, bp)) == 1 and pygame.mouse.get_pressed()[0]:
-        print("load")
-        ann.loadNet('Best')
-        time.sleep(1)
-    bp += 30
-
-    if button("clear", vector2d(10, bp)) == 1 and pygame.mouse.get_pressed()[0]:
-        print("clear")
-        ann.neurons = []
-        ann.maxN = 0
-    bp += 30
-
-    if button("sort", vector2d(10, bp)) == 1 and pygame.mouse.get_pressed()[0]:
-        ann.sort()
-    bp += 30
-
-    if button("train", vector2d(10, bp)) == 1 and pygame.mouse.get_pressed()[0]:
-        print("Train as ERROR")
-    bp += 30
-
-    if button("rand", vector2d(10, bp)) == 1 and pygame.mouse.get_pressed()[0]:
-        print("randomize weights")
-        ann.randomizeWeights(0.1)
-    bp += 30
-
-    if button("crgrid", vector2d(10, bp)) == 1 and pygame.mouse.get_pressed()[0]:
-        print("crgrid")
-        ann.createGrid(6)
-        time.sleep(1.0)
-    bp += 30
-
-    # Create new neuron
-    if pygame.mouse.get_pressed()[0] and mouseOn == -1 and onbutton == 0:
-        print("mouse down")
+    if mouseOn == -1 and any(pos[0] < 505 for pos in left_clicks):
         ann.neurons.append(Neuron2(ann.maxN))
-        ann.neurons[ann.maxN].pos = vector2d(mPos.x, mPos.y)
+        ann.neurons[ann.maxN].pos = vector2d(mouse_pos[0], mouse_pos[1])
         ann.maxN += 1
-        time.sleep(0.3)
 
-    # Move neurons
-    if pygame.mouse.get_pressed()[0] and mouseOn >= 0:
+    if left_down and mouseOn >= 0 and mouse_pos[0] < 505:
         old = ann.neurons[mouseOn].pos
         ann.neurons[mouseOn].pos = vector2d(mPos.x, mPos.y)
         moveCreaturePoint(ann, mouseOn)
         distX = vector2d(mPos.x - old.x, mPos.y - old.y)
-        for ch in ann.neurons[mouseOn].lowest:
-            ann.neurons[ch].pos = vector2d(
-                ann.neurons[ch].pos.x + distX.x,
-                ann.neurons[ch].pos.y + distX.y
+        for child in ann.neurons[mouseOn].lowest:
+            ann.neurons[child].pos = vector2d(
+                ann.neurons[child].pos.x + distX.x,
+                ann.neurons[child].pos.y + distX.y,
             )
         selected = mouseOn
 
-    # Handle connections
-    if pygame.mouse.get_pressed()[2] and mouseOn >= 0 and cswitch == 0:
-        print("right mb pressed on. " + str(mouseOn))
+    w.set_clip(None)
+    pygame.draw.rect(w, (15, 25, 39), (513, 57, 119, 53), border_radius=8)
+    pygame.draw.rect(w, (28, 57, 70), (513, 57, 119, 53), 1, border_radius=8)
+    uiText = ui_font_18.render("BUGZ", True, (235, 248, 255))
+    w.blit(uiText, (522, 8))
+    w.blit(ui_font_9.render("NEURAL LAB  //  EDITOR", True, (93, 191, 197)), (522, 34))
+    active_color = (67, 220, 170) if ann.neurons else (255, 174, 76)
+    active_label = "● NETWORK READY" if ann.neurons else "● EMPTY NETWORK"
+    w.blit(ui_font_9.render(active_label, True, active_color), (520, 67))
+    connection_count = sum(len(neuron.conections) for neuron in ann.neurons)
+    w.blit(ui_font_9.render(f"{len(ann.neurons):02d} NODES", True, (220, 235, 240)), (520, 85))
+    w.blit(ui_font_9.render(f"{connection_count:03d} LINKS", True, (112, 160, 175)), (575, 85))
+
+    pygame.draw.line(w, (24, 37, 53), (518, 122), (627, 122))
+    w.blit(ui_font_9.render("NODE LEGEND", True, (130, 158, 177)), (520, 130))
+    pygame.draw.circle(w, (72, 222, 194), (525, 153), 4)
+    w.blit(ui_font_9.render("HIDDEN", True, (176, 199, 207)), (535, 148))
+    pygame.draw.polygon(w, (255, 190, 82), [(580, 149), (585, 157), (575, 157)])
+    w.blit(ui_font_9.render("SENSOR", True, (176, 199, 207)), (588, 148))
+    pygame.draw.rect(w, (255, 112, 133), (521, 169, 8, 8))
+    w.blit(ui_font_9.render("THRUSTER", True, (176, 199, 207)), (535, 168))
+    w.blit(ui_font_9.render("EDGE BRIGHTNESS = WEIGHT", True, (95, 130, 146)), (520, 190))
+    pygame.draw.line(w, (24, 37, 53), (518, 207), (627, 207))
+    w.blit(ui_font_9.render("NETWORK TOOLS", True, (130, 158, 177)), (520, 215))
+
+    button_specs = [
+        ("SAVE", pygame.Rect(516, 235, 53, 25)),
+        ("LOAD", pygame.Rect(574, 235, 53, 25)),
+        ("SORT", pygame.Rect(516, 266, 53, 25)),
+        ("RAND", pygame.Rect(574, 266, 53, 25)),
+        ("CLEAR", pygame.Rect(516, 297, 53, 25)),
+        ("GRID", pygame.Rect(574, 297, 53, 25)),
+    ]
+    for label, rect in button_specs:
+        drawButton(label, rect, mouse_pos)
+
+    save_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "SAVE")
+    load_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "LOAD")
+    sort_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "SORT")
+    rand_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "RAND")
+    clear_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "CLEAR")
+    grid_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "GRID")
+
+    if save_clicked:
+        ann.saveNet('Best')
+        ann.loadNet('Best')
+    if load_clicked:
+        ann.loadNet('Best')
+    if sort_clicked:
+        ann.sort()
+    if rand_clicked:
+        ann.randomizeWeights(0.1)
+    if clear_clicked:
+        ann.neurons = []
+        ann.maxN = 0
+        ann.hiddenSize = 0
+        ann.poly = []
+    if grid_clicked:
+        ann.createGrid(6)
+
+    if right_down and mouseOn >= 0 and cswitch == 0:
         cstate = mouseOn
         cswitch = 1
 
-    if not pygame.mouse.get_pressed()[2] and mouseOn == -1 and cswitch == 1:
+    if not right_down and mouseOn == -1 and cswitch == 1:
         cstate = -1
         cswitch = 2
 
-    if pygame.mouse.get_pressed()[2] and mouseOn >= 0 and cswitch == 2:
+    if right_down and mouseOn >= 0 and cswitch == 2:
         cstate = -1
         cswitch = 0
 
-    if pygame.mouse.get_pressed()[2] and mouseOn >= 0 and cstate >= 0 and cstate != mouseOn and cswitch == 1:
-        print("right mb pressed on. " + str(mouseOn))
+    if right_down and mouseOn >= 0 and cstate >= 0 and cstate != mouseOn and cswitch == 1:
         ann.connect(mouseOn, cstate, 1)
         ann.neurons[cstate].child.append(mouseOn)
         ann.neurons[mouseOn].parent.append(cstate)
-        # ann.sort()
         cstate = -1
         cswitch = 2
 
@@ -310,10 +327,9 @@ def gloop(ann, events):
     if cswitch == 2 and mouseOn == -1:
         cswitch = 0
 
-    # Draw status text
-    text("cstate=" + str(cstate) + "; cswitch=" + str(cswitch) + "; mouseon=" + str(mouseOn), vector2d(100, 10), (255, 255, 255), 18)
+    if mouse_pos[0] < 505:
+        pygame.draw.circle(w, (70, 235, 220), (int(mPos.x), int(mPos.y)), 4, 1)
+        pygame.draw.line(w, (70, 235, 220), (mPos.x - 7, mPos.y), (mPos.x + 7, mPos.y), 1)
+        pygame.draw.line(w, (70, 235, 220), (mPos.x, mPos.y - 7), (mPos.x, mPos.y + 7), 1)
 
-    # Draw mouse cursor
-    circle(mPos, 4, 1.0)
-
-    pygame.display.flip()  # Update the display
+    pygame.display.flip()

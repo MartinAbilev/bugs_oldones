@@ -5,6 +5,8 @@ import gfx as gx
 # Initialize global variables
 step = 0
 Ann = Ann2()
+Ann.loadNet('Best')
+clock = pygame.time.Clock()
 
 # Display initial status
 gx.status(Ann)
@@ -20,6 +22,7 @@ while running:
     Ann.annStep()
     gx.clear()
     gx.gloop(Ann, events)
+    clock.tick(60)
 
 # Cleanup
 pygame.quit()

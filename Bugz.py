@@ -1,9 +1,12 @@
 # Bugz.py
 import copy
+import os
 import pygame
 import numpy as np
 from Box2D import *
 import math
+import subprocess
+import sys
 from NeuralNetwork import *
 
 # Initialize Pygame
@@ -45,6 +48,7 @@ for corner_x, corner_y, sign_x, sign_y in (
 try:
     font_8 = pygame.font.SysFont("arial", 8)
     font_12 = pygame.font.SysFont("arial", 12)
+    ui_font_9 = pygame.font.SysFont("arial", 9)
     ui_font_10 = pygame.font.SysFont("arial", 10)
     ui_font_14 = pygame.font.SysFont("arial", 14, bold=True)
     ui_font_20 = pygame.font.SysFont("arial", 20, bold=True)
@@ -62,6 +66,7 @@ radiation = 1.0
 radiation_slider_dragging = False
 radiation_slider = pygame.Rect(519, 137, 108, 8)
 radiation_slider_hitbox = pygame.Rect(510, 116, 121, 40)
+edit_button = pygame.Rect(516, 410, 112, 29)
 
 # Vector2d class to replace sf.Vector2
 class vector2d(object):
@@ -145,9 +150,13 @@ def drawDashboard(surface, active_objects, record, mutation_rate):
         uiText(surface, "awaiting signal", (522, 316), (94, 117, 137), ui_font_10)
 
     pygame.draw.line(surface, (24, 37, 53), (518, 407), (627, 407))
-    uiText(surface, "LMB  mutate", (519, 417), (151, 174, 192), ui_font_10)
-    uiText(surface, "RMB  reset record", (519, 436), (151, 174, 192), ui_font_10)
-    uiText(surface, "60 FPS  //  BOX2D", (519, 459), (66, 133, 146), ui_font_10)
+    button_hovered = edit_button.collidepoint(pygame.mouse.get_pos())
+    button_fill = (24, 76, 80) if button_hovered else (17, 43, 52)
+    button_border = (70, 220, 205) if button_hovered else (35, 91, 101)
+    pygame.draw.rect(surface, button_fill, edit_button, border_radius=6)
+    pygame.draw.rect(surface, button_border, edit_button, 1, border_radius=6)
+    uiText(surface, "EDIT NETWORK", (535, 418), (224, 245, 242), ui_font_10)
+    uiText(surface, "LMB mutate   //   RMB reset", (519, 449), (115, 145, 161), ui_font_9)
 
 # Box2D contact listener
 class myContactListener(b2ContactListener):
@@ -411,9 +420,29 @@ alive = 0
 mPos = vector2d(0, 0)
 while running:
     # Handle events
+    edit_requested = False
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif (
+            event.type == pygame.MOUSEBUTTONDOWN
+            and event.button == 1
+            and edit_button.collidepoint(event.pos)
+        ):
+            edit_requested = True
+
+    if edit_requested:
+        editor_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bugEdit.py")
+        subprocess.run(
+            [sys.executable, editor_path],
+            cwd=os.path.dirname(editor_path),
+            check=True,
+        )
+        annRecord = Ann2()
+        annRecord.loadNet("Best")
+        for obj in objects:
+            if obj.death == 0:
+                obj.Ann.loadNet("Best")
 
     # Update mouse position
     mouse_pos = pygame.mouse.get_pos()
