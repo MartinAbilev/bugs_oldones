@@ -60,8 +60,95 @@ def circle(pos, r, c):
     pygame.draw.circle(w, (255, 0, 0), (pos.x, pos.y), r, 1)  # Outline
     return onmouse
 
-def line(frm, to):
-    pygame.draw.line(w, (255, 255, 255), (frm.x, frm.y), (to.x, to.y))
+def drawNeuron(pos, size, value, shape):
+    hovered = cDist(pos, mPos) < size
+    radius = size - 4 if hovered else size
+    center = (int(pos.x), int(pos.y))
+    brightness = max(0, min(255, round(255 * abs(value))))
+    color = (brightness, 0, 0) if value >= 0 else (0, brightness, 0)
+
+    if shape == "circle":
+        pygame.draw.circle(w, color, center, radius)
+        pygame.draw.circle(w, (255, 0, 0), center, radius, 1)
+    elif shape == "triangle":
+        points = [
+            (center[0], center[1] - radius),
+            (center[0] + radius, center[1] + radius),
+            (center[0] - radius, center[1] + radius),
+        ]
+        pygame.draw.polygon(w, color, points)
+        pygame.draw.polygon(w, (255, 0, 0), points, 1)
+    else:
+        rect = pygame.Rect(center[0] - radius, center[1] - radius, radius * 2, radius * 2)
+        pygame.draw.rect(w, color, rect)
+        pygame.draw.rect(w, (255, 0, 0), rect, 1)
+
+    return hovered
+
+def neuronShape(ann, index):
+    if index < ann.hiddenSize:
+        return "circle"
+    if index < ann.hiddenSize + len(ann.poly) + 2:
+        return "triangle"
+    return "square"
+
+def moveCreaturePoint(ann, neuron_index):
+    sensor_start = ann.hiddenSize
+    output_start = sensor_start + len(ann.poly) + 2
+    if sensor_start <= neuron_index < sensor_start + len(ann.poly):
+        poly_index = neuron_index - sensor_start
+        scale = 185
+    elif output_start <= neuron_index < output_start + min(4, len(ann.poly)):
+        poly_index = neuron_index - output_start
+        scale = 225
+    else:
+        return
+
+    max_extent = max(
+        40,
+        max(
+            (abs(float(coordinate)) for point in ann.poly for coordinate in point),
+            default=0,
+        ),
+    )
+    center_x = 320
+    center_y = 240
+    ann.poly[poly_index] = [
+        (ann.neurons[neuron_index].pos.x - center_x) * max_extent / scale,
+        (ann.neurons[neuron_index].pos.y - center_y) * max_extent / scale,
+    ]
+
+    updated_extent = max(
+        40,
+        max(
+            (abs(float(coordinate)) for point in ann.poly for coordinate in point),
+            default=0,
+        ),
+    )
+    for index, (x, y) in enumerate(ann.poly):
+        sensor_index = sensor_start + index
+        if sensor_index < len(ann.neurons):
+            ann.neurons[sensor_index].pos = vector2d(
+                center_x + float(x) * 185 / updated_extent,
+                center_y + float(y) * 185 / updated_extent,
+            )
+        thruster_index = output_start + index
+        if index < min(4, len(ann.poly)) and thruster_index < len(ann.neurons):
+            ann.neurons[thruster_index].pos = vector2d(
+                center_x + float(x) * 225 / updated_extent,
+                center_y + float(y) * 225 / updated_extent,
+            )
+
+def line(frm, to, color=(255, 255, 255)):
+    pygame.draw.line(w, color, (frm.x, frm.y), (to.x, to.y))
+
+def connectionColor(weight, min_weight, max_weight):
+    if max_weight == min_weight:
+        brightness = 255
+    else:
+        normalized = (weight - min_weight) / (max_weight - min_weight)
+        brightness = round(40 + normalized * 215)
+    return (brightness, brightness, brightness)
 
 def square(a, b):
     rect = pygame.Rect(a.x, a.y, b.x - a.x, b.y - a.y)
@@ -115,14 +202,22 @@ def gloop(ann, events):
     if not pygame.mouse.get_pressed()[0]:
         mouseOn = -1
 
-    # Draw connections
+    # Draw connections with brightness normalized across the network's weights.
+    weights = [weight for neuron in ann.neurons for weight in neuron.weights]
+    min_weight = min(weights, default=0)
+    max_weight = max(weights, default=0)
     for neuron in ann.neurons:
-        for c in neuron.conections:
-            line(neuron.pos, ann.neurons[c].pos)
+        for index, c in enumerate(neuron.conections):
+            weight = neuron.weights[index]
+            line(
+                neuron.pos,
+                ann.neurons[c].pos,
+                connectionColor(weight, min_weight, max_weight),
+            )
 
-    # Draw neurons and text
-    for neuron in ann.neurons:
-        if circle(neuron.pos, 16, 255 * neuron.out) == 1:
+    # Draw hidden neurons as circles, sensors as triangles, and thrusters as squares.
+    for index, neuron in enumerate(ann.neurons):
+        if drawNeuron(neuron.pos, 16, neuron.out, neuronShape(ann, index)):
             mouseOn = neuron.id
         text(str(round(neuron.out, 3)), neuron.pos, (255, 0, 0), 8)
 
@@ -177,6 +272,7 @@ def gloop(ann, events):
     if pygame.mouse.get_pressed()[0] and mouseOn >= 0:
         old = ann.neurons[mouseOn].pos
         ann.neurons[mouseOn].pos = vector2d(mPos.x, mPos.y)
+        moveCreaturePoint(ann, mouseOn)
         distX = vector2d(mPos.x - old.x, mPos.y - old.y)
         for ch in ann.neurons[mouseOn].lowest:
             ann.neurons[ch].pos = vector2d(

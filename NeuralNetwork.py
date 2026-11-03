@@ -135,8 +135,11 @@ class Ann2:
             )
 
         max_poly_extent = max(
-            (abs(float(coordinate)) for point in self.poly for coordinate in point),
-            default=0,
+            40,
+            max(
+                (abs(float(coordinate)) for point in self.poly for coordinate in point),
+                default=0,
+            ),
         )
         input_scale = 185 / max_poly_extent if max_poly_extent else 0
         output_scale = 225 / max_poly_extent if max_poly_extent else 0
