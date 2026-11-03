@@ -83,7 +83,7 @@ class myContactListener(b2ContactListener):
 # Physics world
 class mworld:
     def __init__(self):
-        self.world = b2World(contactListener=myContactListener(), gravity=(0, -1), doSleep=True)
+        self.world = b2World(contactListener=myContactListener(), gravity=(0, 1), doSleep=True)
         self.timeStep = 1.0 / 60
         self.ground_body = self.world.CreateStaticBody(position=(0, 0), shapes=b2PolygonShape(box=(500, 5)))
         self.ground_body.userData = "passive"
