@@ -224,6 +224,53 @@ class objectA:
             self.time = 0
             self.Ann = []
 
+    def drawThrusterIndicators(self, surface):
+        output_start = self.Ann.hiddenSize + len(self.poly) + 2
+        for index in range(min(4, len(self.poly))):
+            output_index = output_start + index
+            if output_index >= len(self.Ann.neurons):
+                break
+
+            activation = self.Ann.neurons[output_index].out
+            if abs(activation) < 0.05:
+                continue
+
+            vertex_x, vertex_y = self.poly[index]
+            vector_length = math.hypot(vertex_x, vertex_y)
+            if vector_length == 0:
+                continue
+
+            direction = 1 if activation > 0 else -1
+            start_x = self.centerpos.x + vertex_x
+            start_y = self.centerpos.y + vertex_y
+            arrow_length = 2 + 6 * min(abs(activation), 1)
+            end_x = start_x + direction * vertex_x / vector_length * arrow_length
+            end_y = start_y + direction * vertex_y / vector_length * arrow_length
+            start = (round(start_x), round(start_y))
+            end = (round(end_x), round(end_y))
+
+            angle = math.atan2(end_y - start_y, end_x - start_x)
+            arrow_head_length = 3
+            base_x = end_x - arrow_head_length * math.cos(angle)
+            base_y = end_y - arrow_head_length * math.sin(angle)
+            pygame.draw.line(
+                surface,
+                (255, 255, 0),
+                start,
+                (round(base_x), round(base_y)),
+                1,
+            )
+            for side in (-1, 1):
+                head_x = base_x + side * arrow_head_length / 2 * math.sin(angle)
+                head_y = base_y - side * arrow_head_length / 2 * math.cos(angle)
+                pygame.draw.line(
+                    surface,
+                    (255, 255, 0),
+                    end,
+                    (round(head_x), round(head_y)),
+                    1,
+                )
+
     def truster(self, a, b, c, d, r):
         trustVector = b2Vec2(self.poly[0])
         trustCenter = b2Vec2(self.centerpos.x, self.centerpos.y)
@@ -308,6 +355,10 @@ while running:
 
     # Release pixel array
     del pixel_array
+
+    for obj in objects:
+        if obj.death == 0:
+            obj.drawThrusterIndicators(w)
 
     # Remove dead objects
     for obj in to_remove:

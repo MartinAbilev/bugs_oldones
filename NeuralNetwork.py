@@ -21,14 +21,17 @@ class Neuron2:
         self.lowest = []
 
     def step(self, Neurons):
-        value = 0
-        i = 0
-        for con in self.conections:
-            value += self.weights[i] * Neurons[con].out
-            i += 1
-        self.out = math.tanh(value * 5)
+        neuron_outputs = [neuron.out for neuron in Neurons]
+        self.out = self.activation(neuron_outputs)
         Neurons[self.id].out = self.out
         return Neurons
+
+    def activation(self, neuron_outputs, source_limit=None):
+        value = 0
+        for index, con in enumerate(self.conections):
+            if source_limit is None or 0 <= con < source_limit:
+                value += self.weights[index] * neuron_outputs[con]
+        return math.tanh(value * 5)
 
 class Ann2:
     def __init__(self):
@@ -44,8 +47,20 @@ class Ann2:
         self.poly = p
 
     def annStep(self):
-        for neuron in self.neurons:
-            self.neurons = neuron.step(self.neurons)
+        hidden_end = min(max(self.hiddenSize, 0), len(self.neurons))
+        sensor_end = min(hidden_end + len(self.poly) + 2, len(self.neurons))
+        previous_outputs = [neuron.out for neuron in self.neurons]
+
+        hidden_outputs = [
+            neuron.activation(previous_outputs, sensor_end)
+            for neuron in self.neurons[:hidden_end]
+        ]
+        for neuron, output in zip(self.neurons[:hidden_end], hidden_outputs):
+            neuron.out = output
+
+        layer_outputs = [neuron.out for neuron in self.neurons]
+        for neuron in self.neurons[sensor_end:]:
+            neuron.out = neuron.activation(layer_outputs, sensor_end)
 
     def connect(self, inpA, toB, w):
         self.neurons[inpA].conections.append(toB)
@@ -210,6 +225,15 @@ class Ann2:
             self.neurons.append(neuron)
 
         self.maxN = len(self.neurons)
+        output_start = min(self.hiddenSize + len(self.poly) + 2, self.maxN)
+        for neuron in self.neurons[output_start:]:
+            connections = [
+                (source, weight)
+                for source, weight in zip(neuron.conections, neuron.weights)
+                if 0 <= source < output_start
+            ]
+            neuron.conections = [source for source, _ in connections]
+            neuron.weights = [weight for _, weight in connections]
 
     def saveNet(self, fname):
         # Prepare data structure for JSON
