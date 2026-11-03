@@ -9,22 +9,45 @@ from NeuralNetwork import *
 # Initialize Pygame
 pygame.init()
 w = pygame.display.set_mode((640, 480))
-pygame.display.set_caption("BUGZ ANN")
+pygame.display.set_caption("BUGZ // NEURAL SWARM")
 clock = pygame.time.Clock()  # For frame rate control
 
 # Create background surface for static boundaries
 background = pygame.Surface((640, 480))
-background.fill((0, 0, 0))
-# Draw boundaries once
-pygame.draw.rect(background, (255, 0, 0), (0, 0, 500, 5), 1)
-pygame.draw.rect(background, (255, 0, 0), (0, 400, 500, 5), 1)
-pygame.draw.rect(background, (255, 0, 0), (0, 0, 5, 400), 1)
-pygame.draw.rect(background, (255, 0, 0), (500, 0, 5, 400), 1)
+background.fill((7, 12, 21))
+for grid_x in range(25, 500, 25):
+    pygame.draw.line(background, (11, 24, 35), (grid_x, 0), (grid_x, 400))
+for grid_y in range(25, 400, 25):
+    pygame.draw.line(background, (11, 24, 35), (0, grid_y), (500, grid_y))
+pygame.draw.rect(background, (20, 190, 185), (1, 1, 498, 398), 2)
+for corner_x, corner_y, sign_x, sign_y in (
+    (8, 8, 1, 1),
+    (492, 8, -1, 1),
+    (8, 392, 1, -1),
+    (492, 392, -1, -1),
+):
+    pygame.draw.line(
+        background,
+        (70, 235, 220),
+        (corner_x, corner_y),
+        (corner_x + 12 * sign_x, corner_y),
+        2,
+    )
+    pygame.draw.line(
+        background,
+        (70, 235, 220),
+        (corner_x, corner_y),
+        (corner_x, corner_y + 12 * sign_y),
+        2,
+    )
 
 # Load and cache fonts
 try:
     font_8 = pygame.font.SysFont("arial", 8)
     font_12 = pygame.font.SysFont("arial", 12)
+    ui_font_10 = pygame.font.SysFont("arial", 10)
+    ui_font_14 = pygame.font.SysFont("arial", 14, bold=True)
+    ui_font_20 = pygame.font.SysFont("arial", 20, bold=True)
 except Exception as e:
     print("Font error:", e)
     exit(1)
@@ -37,8 +60,8 @@ lifeTimeRecord = 0
 objects = []
 radiation = 1.0
 radiation_slider_dragging = False
-radiation_slider = pygame.Rect(510, 82, 115, 12)
-radiation_slider_hitbox = pygame.Rect(505, 65, 130, 35)
+radiation_slider = pygame.Rect(519, 137, 108, 8)
+radiation_slider_hitbox = pygame.Rect(510, 116, 121, 40)
 
 # Vector2d class to replace sf.Vector2
 class vector2d(object):
@@ -54,6 +77,77 @@ def text(surface, msg, pos, c, size):
     font = font_8 if size == 8 else font_12
     text_surface = font.render(msg, True, c)
     surface.blit(text_surface, (pos.x, pos.y - 11))
+
+def uiText(surface, message, position, color, font):
+    surface.blit(font.render(message, True, color), position)
+
+def drawDashboard(surface, active_objects, record, mutation_rate):
+    panel = pygame.Rect(505, 0, 135, 480)
+    pygame.draw.rect(surface, (10, 17, 29), panel)
+    pygame.draw.line(surface, (25, 54, 68), (505, 0), (505, 480), 2)
+    pygame.draw.line(surface, (24, 37, 53), (518, 48), (627, 48))
+
+    uiText(surface, "BUGZ", (518, 10), (235, 248, 255), ui_font_20)
+    uiText(surface, "NEURAL SWARM", (519, 34), (93, 191, 197), ui_font_10)
+
+    status_color = (67, 220, 170) if active_objects else (255, 174, 76)
+    status_label = "● LIVE" if active_objects else "● RESPAWNING"
+    pygame.draw.rect(surface, (19, 34, 43), (516, 57, 112, 31), border_radius=6)
+    uiText(surface, status_label, (523, 66), status_color, ui_font_10)
+
+    pygame.draw.rect(surface, (15, 25, 39), (513, 99, 119, 70), border_radius=8)
+    pygame.draw.rect(surface, (28, 57, 70), (513, 99, 119, 70), 1, border_radius=8)
+    uiText(surface, "RADIATION", (522, 108), (130, 158, 177), ui_font_10)
+    uiText(surface, f"{mutation_rate:.2f}x", (575, 105), (255, 190, 82), ui_font_14)
+    pygame.draw.rect(surface, (32, 48, 62), radiation_slider, border_radius=4)
+    fill_width = round(radiation_slider.width * mutation_rate / 2)
+    if fill_width:
+        pygame.draw.rect(
+            surface,
+            (255, 165, 65),
+            (radiation_slider.left, radiation_slider.top, fill_width, radiation_slider.height),
+            border_radius=4,
+        )
+    knob_x = radiation_slider.left + fill_width
+    pygame.draw.circle(surface, (255, 239, 205), (knob_x, radiation_slider.centery), 6)
+    pygame.draw.circle(surface, (255, 165, 65), (knob_x, radiation_slider.centery), 6, 1)
+    uiText(surface, "0x", (520, 149), (114, 139, 158), ui_font_10)
+    uiText(surface, "2x", (611, 149), (114, 139, 158), ui_font_10)
+
+    pygame.draw.rect(surface, (15, 25, 39), (513, 180, 119, 83), border_radius=8)
+    pygame.draw.rect(surface, (28, 57, 70), (513, 180, 119, 83), 1, border_radius=8)
+    uiText(surface, "FIELD STATUS", (522, 189), (130, 158, 177), ui_font_10)
+    uiText(surface, "ALIVE", (522, 207), (114, 139, 158), ui_font_10)
+    uiText(surface, f"{active_objects:02d}", (582, 202), (90, 232, 198), ui_font_14)
+    uiText(surface, "BEST LIFE", (522, 232), (114, 139, 158), ui_font_10)
+    uiText(surface, f"{record:05d}", (582, 227), (235, 248, 255), ui_font_14)
+
+    pygame.draw.rect(surface, (15, 25, 39), (513, 274, 119, 119), border_radius=8)
+    pygame.draw.rect(surface, (28, 57, 70), (513, 274, 119, 119), 1, border_radius=8)
+    uiText(surface, "NEURAL SIGNAL", (522, 283), (130, 158, 177), ui_font_10)
+    active_network = next((obj.Ann for obj in objects if obj.death == 0), None)
+    if active_network is not None:
+        neurons = active_network.neurons[:active_network.hiddenSize]
+        for index, neuron in enumerate(neurons[:9]):
+            y = 302 + index * 9
+            pygame.draw.line(surface, (35, 51, 65), (542, y + 3), (619, y + 3), 3)
+            value = neuron.out
+            if value < -1:
+                value = -1
+            elif value > 1:
+                value = 1
+            center_x = 580
+            end_x = round(center_x + value * 37)
+            color = (72, 222, 194) if value >= 0 else (255, 112, 133)
+            pygame.draw.line(surface, color, (center_x, y + 3), (end_x, y + 3), 3)
+            pygame.draw.circle(surface, color, (end_x, y + 3), 2)
+    else:
+        uiText(surface, "awaiting signal", (522, 316), (94, 117, 137), ui_font_10)
+
+    pygame.draw.line(surface, (24, 37, 53), (518, 407), (627, 407))
+    uiText(surface, "LMB  mutate", (519, 417), (151, 174, 192), ui_font_10)
+    uiText(surface, "RMB  reset record", (519, 436), (151, 174, 192), ui_font_10)
+    uiText(surface, "60 FPS  //  BOX2D", (519, 459), (66, 133, 146), ui_font_10)
 
 # Box2D contact listener
 class myContactListener(b2ContactListener):
@@ -328,9 +422,6 @@ while running:
     # Clear screen and draw background
     w.blit(background, (0, 0))
 
-    # Draw mouse
-    dcircle(w, mPos, 0, 30, 255, 0, 0)
-
     # Handle input and update creatures
     right_click = pygame.mouse.get_pressed()[2]
     left_click = pygame.mouse.get_pressed()[0]
@@ -344,6 +435,8 @@ while running:
         elif slider_position > 1:
             slider_position = 1
         radiation = round(slider_position * 2 * 20) / 20
+        left_click = False
+    elif left_click and mouse_pos[0] >= 505:
         left_click = False
     if right_click:
         lifeTimeRecord = 0
@@ -380,50 +473,11 @@ while running:
     for obj in to_remove:
         objects.remove(obj)
 
-    # Draw text overlays
-    text(w, str(lifeTimeRecord), vector2d(505, 10), (255, 0, 0), 8)
-    i = 0
-    for obj in objects:
-        text(w, f"{obj.time} lives={obj.lives}", vector2d(505, 20 + (i * 10)), (0, 255, 0), 8)
-        i += 1
-        if obj.death == 0:
-            j = 0
-            for neuron in obj.Ann.neurons:
-                color = neuron.out
-                cr = 0
-                cg = 0
-                if color > 0:
-                    cg = int(color * 255)
-                if color < 0:
-                    cr = int(color * 255) * -1
-                if cr > 255:
-                    cr = 255
-                if cg > 255:
-                    cg = 255
-                text(
-                    w,
-                    f"  {round(neuron.out, 2):.2f}   ",
-                    vector2d(j * (500 / len(obj.Ann.neurons)), 400 + (i * 10)),
-                    (cr, cg, 100), 8
-                )
-                j += 1
-
-    text(w, f"Radiation: {radiation:.2f}x", vector2d(505, 73), (255, 255, 255), 12)
-    pygame.draw.rect(w, (80, 80, 80), radiation_slider)
-    fill_width = round(radiation_slider.width * radiation / 2)
-    pygame.draw.rect(
-        w,
-        (255, 180, 0),
-        (radiation_slider.left, radiation_slider.top, fill_width, radiation_slider.height),
-    )
-    pygame.draw.rect(w, (220, 220, 220), radiation_slider, 1)
-    knob_x = radiation_slider.left + fill_width
-    pygame.draw.circle(
-        w,
-        (255, 255, 255),
-        (knob_x, radiation_slider.centery),
-        6,
-    )
+    drawDashboard(w, alive, lifeTimeRecord, radiation)
+    if mouse_pos[0] < 500 and mouse_pos[1] < 400:
+        pygame.draw.circle(w, (70, 235, 220), (int(mPos.x), int(mPos.y)), 4, 1)
+        pygame.draw.line(w, (70, 235, 220), (mPos.x - 7, mPos.y), (mPos.x + 7, mPos.y), 1)
+        pygame.draw.line(w, (70, 235, 220), (mPos.x, mPos.y - 7), (mPos.x, mPos.y + 7), 1)
 
     # Update physics
     wrld.world.Step(wrld.timeStep, 32, 32)
