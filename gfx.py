@@ -94,7 +94,7 @@ def button(name, pos):
 def gui(ann):
     pass  # Placeholder if needed
 
-def gloop(ann):
+def gloop(ann, events):
     global mPos, mouseOn, cstate, cswitch, selected, onbutton
     onbutton = 0
 
@@ -103,10 +103,7 @@ def gloop(ann):
     mPos = vector2d(mouse_pos[0], mouse_pos[1])
 
     # Handle events
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            exit()
+    for event in events:
         if event.type == pygame.VIDEORESIZE:
             w = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
             pygame.display.set_caption("CYBERMIND v0.1")

@@ -12,13 +12,14 @@ gx.status(Ann)
 # Main loop
 running = True
 while running:
-    for event in pygame.event.get():
+    events = pygame.event.get()
+    for event in events:
         if event.type == pygame.QUIT:
             running = False
 
     Ann.annStep()
     gx.clear()
-    gx.gloop(Ann)
+    gx.gloop(Ann, events)
 
 # Cleanup
 pygame.quit()
