@@ -130,7 +130,7 @@ def gloop(ann, events):
     bp = 10
     if button("save", vector2d(10, bp)) == 1 and pygame.mouse.get_pressed()[0]:
         print("save")
-        ann.saveNet()
+        ann.saveNet('Best')
         time.sleep(1)
     bp += 30
 
