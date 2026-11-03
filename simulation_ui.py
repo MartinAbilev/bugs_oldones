@@ -45,6 +45,91 @@ class SimulationUI:
     def text(surface, message, position, color, font):
         surface.blit(font.render(message, True, color), position)
 
+    def draw_neural_activity(self, surface, objects):
+        bounds = pygame.Rect(8, 407, 484, 67)
+        pygame.draw.rect(surface, (6, 15, 21), bounds, border_radius=6)
+        pygame.draw.rect(surface, (23, 86, 81), bounds, 1, border_radius=6)
+
+        living_creatures = [obj for obj in objects if obj.death == 0]
+        self.text(
+            surface,
+            "NEURAL MAP",
+            (16, 411),
+            (80, 207, 165),
+            self.font_9,
+        )
+        legend = (
+            ("IN", (55, 135, 255)),
+            ("HID", (45, 225, 115)),
+            ("OUT", (255, 75, 75)),
+        )
+        legend_x = 338
+        for label, color in legend:
+            pygame.draw.rect(surface, color, (legend_x, 412, 5, 5))
+            self.text(surface, label, (legend_x + 8, 410), color, self.font_9)
+            legend_x += 48
+
+        if not living_creatures:
+            self.text(surface, "awaiting signal", (16, 438), (94, 117, 137), self.font_9)
+            return
+
+        network = living_creatures[0].Ann
+        neuron_count = len(network.neurons)
+        if neuron_count == 0:
+            return
+
+        hidden_end = min(network.hiddenSize, neuron_count)
+        input_end = min(hidden_end + len(network.poly) + 2, neuron_count)
+        row_top = 424
+        row_height = bounds.bottom - 4 - row_top
+        column_width = bounds.width - 12
+
+        pygame.draw.line(
+            surface,
+            (23, 55, 55),
+            (bounds.left + 5, row_top - 2),
+            (bounds.right - 5, row_top - 2),
+            1,
+        )
+        for row_index, creature in enumerate(living_creatures):
+            y0 = row_top + row_index * row_height // len(living_creatures)
+            y1 = row_top + (row_index + 1) * row_height // len(living_creatures)
+            if y1 <= y0:
+                continue
+
+            for neuron_index, neuron in enumerate(creature.Ann.neurons[:neuron_count]):
+                x0 = bounds.left + 6 + neuron_index * column_width // neuron_count
+                x1 = bounds.left + 6 + (neuron_index + 1) * column_width // neuron_count
+                cell_size = max(1, min(x1 - x0, y1 - y0))
+                cell_left = x0 + (x1 - x0 - cell_size) // 2
+                cell_top = y0 + (y1 - y0 - cell_size) // 2
+
+                if neuron_index < hidden_end:
+                    base_color = (45, 225, 115)
+                elif neuron_index < input_end:
+                    base_color = (55, 135, 255)
+                else:
+                    base_color = (255, 75, 75)
+                activation = min(1.0, abs(float(neuron.out)))
+                brightness = 0.3 + activation * 0.7
+                color = tuple(round(channel * brightness) for channel in base_color)
+                pygame.draw.rect(
+                    surface,
+                    color,
+                    (cell_left, cell_top, cell_size, cell_size),
+                )
+
+        for boundary in (hidden_end, input_end):
+            if 0 < boundary < neuron_count:
+                x = bounds.left + 6 + boundary * column_width // neuron_count
+                pygame.draw.line(
+                    surface,
+                    (130, 170, 170),
+                    (x, row_top),
+                    (x, bounds.bottom - 4),
+                    1,
+                )
+
     def draw_dashboard(self, surface, active_count, best_live, record, mutation_rate, objects):
         text = self.text
         panel = pygame.Rect(505, 0, 135, 480)
@@ -137,3 +222,4 @@ class SimulationUI:
         pygame.draw.rect(surface, border, self.edit_button, 1, border_radius=6)
         text(surface, "EDIT NETWORK", (535, 418), (224, 245, 242), self.font_10)
         text(surface, "LMB mutate   //   RMB reset", (519, 449), (115, 145, 161), self.font_9)
+        self.draw_neural_activity(surface, objects)
