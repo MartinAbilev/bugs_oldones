@@ -361,19 +361,19 @@ def gloop(ann, events):
     for label, rect in button_specs:
         drawButton(label, rect, mouse_pos)
 
-    w.blit(ui_font_9.render("CREATE NODE TYPE", True, (130, 158, 177)), (520, 330))
+    all_to_all_button = pygame.Rect(516, 328, 111, 25)
+    drawButton("ALL-TO-ALL", all_to_all_button, mouse_pos)
+
+    w.blit(ui_font_9.render("CREATE NODE TYPE", True, (130, 158, 177)), (520, 361))
     creation_specs = [
-        ("HIDDEN", 0, pygame.Rect(516, 347, 111, 23)),
-        ("SENSOR", 1, pygame.Rect(516, 375, 111, 23)),
-        ("THRUSTER", 2, pygame.Rect(516, 403, 111, 23)),
+        ("HIDDEN", 0, pygame.Rect(516, 378, 111, 23)),
+        ("SENSOR", 1, pygame.Rect(516, 406, 111, 23)),
+        ("THRUSTER", 2, pygame.Rect(516, 434, 111, 23)),
     ]
     for label, neuron_type, rect in creation_specs:
         drawButton(label, rect, mouse_pos)
         if create_neuron_type == neuron_type:
             pygame.draw.rect(w, (70, 220, 205), rect, 2, border_radius=5)
-
-    all_to_all_button = pygame.Rect(516, 435, 111, 25)
-    drawButton("ALL-TO-ALL", all_to_all_button, mouse_pos)
 
     save_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "SAVE")
     load_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "LOAD")
