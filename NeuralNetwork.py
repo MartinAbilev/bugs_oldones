@@ -193,7 +193,7 @@ class Ann2:
                         self.connect(con.id, neuron.id, 1)
 
     def sort(self, neuron_type=None):
-        """Arrange the selected layer: hidden nodes in a grid, inputs/outputs around it."""
+        """Grid hidden nodes and align physical inputs/outputs to simulation coordinates."""
         neuron_count = len(self.neurons)
         hidden_count = min(max(self.hiddenSize, 0), neuron_count)
         input_count = min(len(self.poly) + 2, neuron_count - hidden_count)
@@ -217,41 +217,32 @@ class Ann2:
                 )
 
         if neuron_type in (None, 1):
-            # Keep the input layer readable without changing the creature morphology.
             for index in range(input_count):
-                angle = -math.pi / 2 + 2 * math.pi * index / max(input_count, 1)
-                self.neurons[hidden_count + index].pos = vector2d(
-                    center_x + 185 * math.cos(angle),
-                    center_y + 185 * math.sin(angle),
-                )
-
-        if neuron_type in (None, 2):
-            max_poly_extent = max(
-                40,
-                max(
-                    (abs(float(coordinate)) for point in self.poly for coordinate in point),
-                    default=0,
-                ),
-            )
-            output_scale = 225 / max_poly_extent
-            output_count = neuron_count - output_start
-            mapped_output_count = min(4, len(self.poly))
-            for index in range(output_count):
-                neuron = self.neurons[output_start + index]
-                if index < mapped_output_count:
+                if index < len(self.poly):
                     x, y = self.poly[index]
-                    neuron.pos = vector2d(
-                        center_x + float(x) * output_scale,
-                        center_y + float(y) * output_scale,
+                    position = vector2d(
+                        center_x + float(x) * 1.2,
+                        center_y + float(y) * 1.2,
                     )
                 else:
-                    extra_index = index - mapped_output_count
-                    extra_count = output_count - mapped_output_count
+                    extra_index = index - len(self.poly)
+                    extra_count = input_count - len(self.poly)
                     angle = -math.pi / 2 + 2 * math.pi * extra_index / max(extra_count, 1)
-                    neuron.pos = vector2d(
-                        center_x + 225 * math.cos(angle),
-                        center_y + 225 * math.sin(angle),
+                    position = vector2d(
+                        center_x + 185 * math.cos(angle),
+                        center_y + 185 * math.sin(angle),
                     )
+                self.neurons[hidden_count + index].pos = position
+
+        if neuron_type in (None, 2):
+            output_count = neuron_count - output_start
+            thruster_indices = [index for index in range(output_count) if index != 4]
+            thruster_vectors = self.thrusterVectors(thruster_indices)
+            for index, vector in zip(thruster_indices, thruster_vectors):
+                self.neurons[output_start + index].pos = vector2d(
+                    center_x + vector[0],
+                    center_y + vector[1],
+                )
 
     def loadNet(self, fname):
         """Load a network JSON file and discard output links to invalid later layers."""
@@ -292,6 +283,7 @@ class Ann2:
             ]
             neuron.conections = [source for source, _ in connections]
             neuron.weights = [weight for _, weight in connections]
+        self.syncMorphologyPositions()
 
     def saveNet(self, fname):
         """Serialize morphology, node metadata, positions, and links to JSON."""
@@ -339,16 +331,9 @@ class Ann2:
         self.syncMorphologyPositions()
 
     def syncMorphologyPositions(self):
-        """Keep sensor markers and morphology-backed thruster markers aligned."""
+        """Align sensor samples and thruster anchors with simulation-local coordinates."""
         center_x = 320
         center_y = 240
-        max_poly_extent = max(
-            40,
-            max(
-                (abs(float(coordinate)) for point in self.poly for coordinate in point),
-                default=0,
-            ),
-        )
         sensor_start = self.hiddenSize
         output_start = min(sensor_start + len(self.poly) + 2, len(self.neurons))
 
@@ -356,16 +341,59 @@ class Ann2:
             sensor_index = sensor_start + index
             if sensor_index < len(self.neurons):
                 self.neurons[sensor_index].pos = vector2d(
-                    center_x + float(x) * 185 / max_poly_extent,
-                    center_y + float(y) * 185 / max_poly_extent,
+                    center_x + float(x) * 1.2,
+                    center_y + float(y) * 1.2,
                 )
 
+        output_count = len(self.neurons) - output_start
+        thruster_indices = [index for index in range(output_count) if index != 4]
+        thruster_vectors = self.thrusterVectors(thruster_indices)
+        for index, vector in zip(thruster_indices, thruster_vectors):
             output_index = output_start + index
-            if index < 4 and output_index < len(self.neurons):
-                self.neurons[output_index].pos = vector2d(
-                    center_x + float(x) * 225 / max_poly_extent,
-                    center_y + float(y) * 225 / max_poly_extent,
+            self.neurons[output_index].pos = vector2d(
+                center_x + vector[0],
+                center_y + vector[1],
+            )
+
+    def thrusterVectors(self, output_indices):
+        """Return the simulation's local-space force vectors for output nodes."""
+        morphology_points = self.poly[:4]
+        morphology_radius = (
+            sum(math.hypot(x, y) for x, y in morphology_points)
+            / len(morphology_points)
+            if morphology_points
+            else 10
+        )
+        output_start = min(self.hiddenSize + len(self.poly) + 2, len(self.neurons))
+        extra_count = sum(index >= 4 for index in output_indices)
+        extra_index = 0
+        vectors = []
+
+        for index in output_indices:
+            if index < 4 and index < len(self.poly):
+                vectors.append(self.poly[index])
+                continue
+
+            neuron_index = output_start + index
+            neuron = self.neurons[neuron_index]
+            direction_x = neuron.pos.x - 320
+            direction_y = neuron.pos.y - 240
+            direction_length = math.hypot(direction_x, direction_y)
+            if direction_length == 0:
+                direction_angle = 2 * math.pi * extra_index / max(extra_count, 1)
+                direction_x = math.cos(direction_angle)
+                direction_y = math.sin(direction_angle)
+                direction_length = 1
+
+            vectors.append(
+                (
+                    direction_x * morphology_radius / direction_length,
+                    direction_y * morphology_radius / direction_length,
                 )
+            )
+            extra_index += 1
+
+        return vectors
 
     def randomizeWeights(self, factor):
         """Mutate morphology and connection weights in proportion to factor."""

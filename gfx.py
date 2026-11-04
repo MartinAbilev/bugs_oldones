@@ -44,6 +44,8 @@ create_neuron_type = 0  # Node type assigned when the user clicks empty graph sp
 view_zoom = 1.0
 view_pan = vector2d(0, 0)
 last_pan_position = None
+drag_node_index = -1
+drag_offset = vector2d(0, 0)
 
 # Helper function to calculate distance (replacing vmath.cDist if needed)
 def cDist(pos1, pos2):
@@ -157,47 +159,18 @@ def moveCreaturePoint(ann, neuron_index):
     output_start = sensor_start + len(ann.poly) + 2
     if sensor_start <= neuron_index < sensor_start + len(ann.poly):
         poly_index = neuron_index - sensor_start
-        scale = 185
+        scale = 1.2
     elif output_start <= neuron_index < output_start + min(4, len(ann.poly)):
         poly_index = neuron_index - output_start
-        scale = 225
+        scale = 1
     else:
         return
 
-    max_extent = max(
-        40,
-        max(
-            (abs(float(coordinate)) for point in ann.poly for coordinate in point),
-            default=0,
-        ),
-    )
-    center_x = 320
-    center_y = 240
     ann.poly[poly_index] = [
-        (ann.neurons[neuron_index].pos.x - center_x) * max_extent / scale,
-        (ann.neurons[neuron_index].pos.y - center_y) * max_extent / scale,
+        (ann.neurons[neuron_index].pos.x - 320) / scale,
+        (ann.neurons[neuron_index].pos.y - 240) / scale,
     ]
-
-    updated_extent = max(
-        40,
-        max(
-            (abs(float(coordinate)) for point in ann.poly for coordinate in point),
-            default=0,
-        ),
-    )
-    for index, (x, y) in enumerate(ann.poly):
-        sensor_index = sensor_start + index
-        if sensor_index < len(ann.neurons):
-            ann.neurons[sensor_index].pos = vector2d(
-                center_x + float(x) * 185 / updated_extent,
-                center_y + float(y) * 185 / updated_extent,
-            )
-        thruster_index = output_start + index
-        if index < min(4, len(ann.poly)) and thruster_index < len(ann.neurons):
-            ann.neurons[thruster_index].pos = vector2d(
-                center_x + float(x) * 225 / updated_extent,
-                center_y + float(y) * 225 / updated_extent,
-            )
+    ann.syncMorphologyPositions()
 
 def line(frm, to, color=(255, 255, 255)):
     """Draw a connection between two editor coordinates."""
@@ -230,53 +203,89 @@ def drawButton(name, rect, mouse_pos):
     return hovered
 
 def drawThrusterDirection(ann, output_index):
-    """Draw an output arrow from its morphology or editor-position direction."""
+    """Draw the thruster arrow at the same local offset used by the simulation."""
     output_start = ann.hiddenSize + len(ann.poly) + 2
     if output_index == 4:
         return
 
     neuron = ann.neurons[output_start + output_index]
-    if output_index < 4 and output_index < len(ann.poly):
-        direction_x, direction_y = ann.poly[output_index]
-    else:
-        direction_x = neuron.pos.x - 320
-        direction_y = neuron.pos.y - 240
-
-    direction_length = (direction_x ** 2 + direction_y ** 2) ** 0.5
+    output_indices = [
+        index for index in range(len(ann.neurons) - output_start) if index != 4
+    ]
+    vector_by_index = dict(zip(output_indices, ann.thrusterVectors(output_indices)))
+    direction_x, direction_y = vector_by_index[output_index]
+    direction_length = math.hypot(direction_x, direction_y)
     if direction_length == 0:
         return
 
     activation = neuron.out
-    if abs(activation) >= 0.05 and activation < 0:
+    if activation <= 0:
         direction_x = -direction_x
         direction_y = -direction_y
-    direction_x /= direction_length
-    direction_y /= direction_length
-
-    screen_position = graphToScreen(neuron.pos)
-    arrow_scale = view_zoom
-    start_x = screen_position.x + direction_x * 18 * arrow_scale
-    start_y = screen_position.y + direction_y * 18 * arrow_scale
-    end_x = start_x + direction_x * 11 * arrow_scale
-    end_y = start_y + direction_y * 11 * arrow_scale
-    angle = math.atan2(direction_y, direction_x)
+    vector_x, vector_y = vector_by_index[output_index]
+    start = graphToScreen(vector2d(320 + vector_x, 240 + vector_y))
+    end = graphToScreen(
+        vector2d(
+            320 + vector_x + direction_x / direction_length * 8,
+            240 + vector_y + direction_y / direction_length * 8,
+        )
+    )
+    color = (255, 220, 90) if abs(activation) >= 0.05 else (90, 150, 170)
+    thickness = max(1, round(view_zoom * (2 if abs(activation) >= 0.05 else 1)))
     pygame.draw.line(
         w,
-        (255, 220, 90),
-        (round(start_x), round(start_y)),
-        (round(end_x), round(end_y)),
-        2,
+        color,
+        (round(start.x), round(start.y)),
+        (round(end.x), round(end.y)),
+        thickness,
     )
+    angle = math.atan2(end.y - start.y, end.x - start.x)
+    arrow_head_length = 3 * view_zoom
     for side in (-1, 1):
-        head_x = end_x - 4 * math.cos(angle) + side * 2 * math.sin(angle)
-        head_y = end_y - 4 * math.sin(angle) - side * 2 * math.cos(angle)
+        head_x = end.x - arrow_head_length * math.cos(angle) + side * arrow_head_length / 2 * math.sin(angle)
+        head_y = end.y - arrow_head_length * math.sin(angle) - side * arrow_head_length / 2 * math.cos(angle)
         pygame.draw.line(
             w,
-            (255, 220, 90),
-            (round(end_x), round(end_y)),
+            color,
+            (round(end.x), round(end.y)),
             (round(head_x), round(head_y)),
-            2,
+            thickness,
         )
+
+def drawSimulationMorphology(ann):
+    """Show the creature body and sensor samples at their simulation coordinates."""
+    center = graphToScreen(vector2d(320, 240))
+    center_point = (round(center.x), round(center.y))
+    radius = max(1, round(10 * view_zoom))
+    pygame.draw.circle(
+        w,
+        (ann.colorR, ann.colorG, ann.colorB),
+        center_point,
+        radius,
+    )
+    pygame.draw.circle(
+        w,
+        (255, 0, 0),
+        center_point,
+        radius,
+        max(1, round(view_zoom)),
+    )
+    pygame.draw.circle(w, (0, 255, 0), center_point, max(1, round(2 * view_zoom)))
+
+    for index, (x, y) in enumerate(ann.poly):
+        sensor = graphToScreen(
+            vector2d(320 + float(x) * 1.2, 240 + float(y) * 1.2)
+        )
+        neuron_index = ann.hiddenSize + index
+        activation = ann.neurons[neuron_index].out if neuron_index < len(ann.neurons) else 0
+        sensor_point = (round(sensor.x), round(sensor.y))
+        pygame.draw.circle(
+            w,
+            (0, max(0, min(255, round(activation))), 0),
+            sensor_point,
+            max(1, round(2 * view_zoom)),
+        )
+        pygame.draw.circle(w, (255, 0, 0), sensor_point, max(1, round(2 * view_zoom)), 1)
 
 def createNeuronAt(ann, position, neuron_type):
     """Insert a node into its layer, adding morphology for sensor nodes."""
@@ -286,16 +295,9 @@ def createNeuronAt(ann, position, neuron_type):
         return neuron
 
     if neuron_type == 1:
-        extent = max(
-            40,
-            max(
-                (abs(float(coordinate)) for point in ann.poly for coordinate in point),
-                default=0,
-            ),
-        )
         point = [
-            (position.x - 320) * extent / 185,
-            (position.y - 240) * extent / 185,
+            (position.x - 320) / 1.2,
+            (position.y - 240) / 1.2,
         ]
         sensor_index = ann.hiddenSize + len(ann.poly)
         ann.poly.append(point)
@@ -310,7 +312,9 @@ def createNeuronAt(ann, position, neuron_type):
             2,
             vector2d(320, 240),
         )
-    return ann.insertNeuron(len(ann.neurons), neuron_type, position)
+    neuron = ann.insertNeuron(len(ann.neurons), neuron_type, position)
+    ann.syncMorphologyPositions()
+    return neuron
 
 def gui(ann):
     """Legacy UI hook; sidebar rendering is performed directly by gloop."""
@@ -319,7 +323,7 @@ def gui(ann):
 def gloop(ann, events):
     """Process one frame of editor input and draw the graph and sidebar."""
     global w, mPos, mouseOn, cstate, cswitch, selected, onbutton, create_neuron_type
-    global last_pan_position, view_pan
+    global last_pan_position, view_pan, drag_node_index, drag_offset
     onbutton = 0
 
     mouse_pos = pygame.mouse.get_pos()
@@ -339,6 +343,12 @@ def gloop(ann, events):
         view_pan.y += mouse_pos[1] - last_pan_position[1]
         mouseOn = -1
     last_pan_position = mouse_pos if middle_down else None
+    if any(
+        event.type == pygame.MOUSEBUTTONUP and event.button == 1
+        for event in events
+    ):
+        drag_node_index = -1
+        ann.syncMorphologyPositions()
 
     left_down = pygame.mouse.get_pressed()[0]
     right_down = pygame.mouse.get_pressed()[2]
@@ -366,9 +376,10 @@ def gloop(ann, events):
                 connectionColor(weight, min_weight, max_weight),
             )
 
+    drawSimulationMorphology(ann)
     for index, neuron in enumerate(ann.neurons):
         screen_position = graphToScreen(neuron.pos)
-        if drawNeuron(screen_position, max(5, round(16 * view_zoom)), neuron.out, neuronShape(ann, index)):
+        if drawNeuron(screen_position, 16, neuron.out, neuronShape(ann, index)):
             mouseOn = neuron.id
         text(str(round(neuron.out, 3)), screen_position, (255, 0, 0), 8)
         # The simulation's output layer begins after hidden nodes and all sensor inputs.
@@ -376,21 +387,38 @@ def gloop(ann, events):
         if index >= output_start:
             drawThrusterDirection(ann, index - output_start)
 
+    if not middle_down:
+        for click_position in left_clicks:
+            if click_position[0] < 505 and mouseOn >= 0:
+                graph_click = screenToGraph(
+                    vector2d(click_position[0], click_position[1])
+                )
+                node_position = ann.neurons[mouseOn].pos
+                drag_node_index = mouseOn
+                drag_offset = vector2d(
+                    node_position.x - graph_click.x,
+                    node_position.y - graph_click.y,
+                )
+
     if not middle_down and mouseOn == -1 and any(pos[0] < 505 for pos in left_clicks):
         createNeuronAt(ann, screenToGraph(mPos), create_neuron_type)
 
-    if left_down and not middle_down and mouseOn >= 0 and mouse_pos[0] < 505:
-        old = ann.neurons[mouseOn].pos
+    if left_down and not middle_down and drag_node_index >= 0 and mouse_pos[0] < 505:
+        old = ann.neurons[drag_node_index].pos
         graph_mouse_position = screenToGraph(mPos)
-        ann.neurons[mouseOn].pos = graph_mouse_position
-        moveCreaturePoint(ann, mouseOn)
-        distX = vector2d(graph_mouse_position.x - old.x, graph_mouse_position.y - old.y)
-        for child in ann.neurons[mouseOn].lowest:
+        new_position = vector2d(
+            graph_mouse_position.x + drag_offset.x,
+            graph_mouse_position.y + drag_offset.y,
+        )
+        ann.neurons[drag_node_index].pos = new_position
+        moveCreaturePoint(ann, drag_node_index)
+        distX = vector2d(new_position.x - old.x, new_position.y - old.y)
+        for child in ann.neurons[drag_node_index].lowest:
             ann.neurons[child].pos = vector2d(
                 ann.neurons[child].pos.x + distX.x,
                 ann.neurons[child].pos.y + distX.y,
             )
-        selected = mouseOn
+        selected = drag_node_index
 
     w.set_clip(None)
     pygame.draw.rect(w, (15, 25, 39), (513, 57, 119, 53), border_radius=8)

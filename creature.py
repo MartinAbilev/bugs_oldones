@@ -112,17 +112,14 @@ class Creature:
             self.Ann = []
             return
 
-        position = vector2d(
-            self.body.position.x + self.r,
-            self.body.position.y + self.r,
-        )
-        self.centerpos = vector2d(position.x - self.r, position.y - self.r)
+        position = vector2d(self.body.position.x, self.body.position.y)
+        self.centerpos = position
         self.poly = rotate_polygon(self.Ann.poly, self.angle())
         hidden_size = self.Ann.hiddenSize
         dcircle(surface, position, self.angle(), self.r, 255, self.Ann.colorG, self.Ann.colorB)
         dcircle(
             surface,
-            vector2d(self.centerpos.x + 2, self.centerpos.y + 2),
+            self.centerpos,
             self.angle(),
             2,
             0,
@@ -132,7 +129,10 @@ class Creature:
         for index, point in enumerate(self.poly):
             dcircle(
                 surface,
-                vector2d(self.centerpos.x + point[0] + 2, self.centerpos.y + point[1] + 2),
+                vector2d(
+                    self.centerpos.x + point[0] * 1.2,
+                    self.centerpos.y + point[1] * 1.2,
+                ),
                 self.angle(),
                 2,
                 0,
@@ -195,45 +195,19 @@ class Creature:
 
     def _thruster_vectors(self, output_indices):
         """Map actuator outputs to rotated local vectors using editor positions."""
-        morphology_points = self.Ann.poly[:4]
-        morphology_radius = (
-            sum(math.hypot(x, y) for x, y in morphology_points)
-            / len(morphology_points)
-            if morphology_points
-            else 10
-        )
+        local_vectors = self.Ann.thrusterVectors(output_indices)
         angle = math.radians(self.angle())
         cosine = math.cos(angle)
         sine = math.sin(angle)
-        extra_count = sum(index >= 4 for index in output_indices)
-        extra_index = 0
         vectors = []
 
-        for index in output_indices:
-            if index < 4 and index < len(self.poly):
-                vectors.append(self.poly[index])
-                continue
-
-            neuron_index = self.Ann.hiddenSize + len(self.Ann.poly) + 2 + index
-            neuron = self.Ann.neurons[neuron_index]
-            direction_x = neuron.pos.x - 320
-            direction_y = neuron.pos.y - 240
-            direction_length = math.hypot(direction_x, direction_y)
-            if direction_length == 0:
-                direction_angle = 2 * math.pi * extra_index / max(extra_count, 1)
-                direction_x = math.cos(direction_angle)
-                direction_y = math.sin(direction_angle)
-                direction_length = 1
-
-            local_x = direction_x * morphology_radius / direction_length
-            local_y = direction_y * morphology_radius / direction_length
+        for local_x, local_y in local_vectors:
             vectors.append(
                 (
                     local_x * cosine - local_y * sine,
                     local_x * sine + local_y * cosine,
                 )
             )
-            extra_index += 1
 
         return vectors
 

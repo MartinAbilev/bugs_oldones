@@ -101,9 +101,13 @@ class SimulationUI:
         if neuron_count == 0:
             return
 
-        # Node order is hidden layer, morphology/velocity inputs, then outputs.
+        # Keep network indices intact while displaying inputs, hidden, then outputs.
         hidden_end = min(network.hiddenSize, neuron_count)
         input_end = min(hidden_end + len(network.poly) + 2, neuron_count)
+        input_indices = list(range(hidden_end, input_end))
+        hidden_indices = list(range(hidden_end))
+        output_indices = list(range(input_end, neuron_count))
+        display_indices = input_indices + hidden_indices + output_indices
         row_top = 424
         row_height = bounds.bottom - 4 - row_top
         column_width = bounds.width - 12
@@ -121,9 +125,10 @@ class SimulationUI:
             if y1 <= y0:
                 continue
 
-            for neuron_index, neuron in enumerate(creature.Ann.neurons[:neuron_count]):
-                x0 = bounds.left + 6 + neuron_index * column_width // neuron_count
-                x1 = bounds.left + 6 + (neuron_index + 1) * column_width // neuron_count
+            for display_index, neuron_index in enumerate(display_indices):
+                neuron = creature.Ann.neurons[neuron_index]
+                x0 = bounds.left + 6 + display_index * column_width // neuron_count
+                x1 = bounds.left + 6 + (display_index + 1) * column_width // neuron_count
                 cell_size = max(1, min(x1 - x0, y1 - y0))
                 cell_left = x0 + (x1 - x0 - cell_size) // 2
                 cell_top = y0 + (y1 - y0 - cell_size) // 2
@@ -143,7 +148,7 @@ class SimulationUI:
                     (cell_left, cell_top, cell_size, cell_size),
                 )
 
-        for boundary in (hidden_end, input_end):
+        for boundary in (len(input_indices), len(input_indices) + len(hidden_indices)):
             if 0 < boundary < neuron_count:
                 x = bounds.left + 6 + boundary * column_width // neuron_count
                 pygame.draw.line(
