@@ -9,7 +9,16 @@ class SimulationUI:
             pygame.draw.line(self.background, (11, 24, 35), (grid_x, 0), (grid_x, 400))
         for grid_y in range(25, 400, 25):
             pygame.draw.line(self.background, (11, 24, 35), (0, grid_y), (500, grid_y))
-        pygame.draw.rect(self.background, (255, 45, 65), (1, 1, 498, 398), 2)
+        perimeter_glow = pygame.Surface((640, 480), pygame.SRCALPHA)
+        for inset in range(10):
+            alpha = round(220 * (1 - inset / 10) ** 1.5)
+            pygame.draw.rect(
+                perimeter_glow,
+                (255, 35, 55, alpha),
+                (1 + inset, 1 + inset, 498 - inset * 2, 398 - inset * 2),
+                1,
+            )
+        self.background.blit(perimeter_glow, (0, 0))
         for corner_x, corner_y, sign_x, sign_y in (
             (8, 8, 1, 1),
             (492, 8, -1, 1),
