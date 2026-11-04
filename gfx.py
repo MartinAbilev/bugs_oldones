@@ -5,7 +5,10 @@ from NeuralNetwork import *  # Assuming this includes Neuron, NeuralNetwork, etc
 
 # Define vector2d class to replace sf.Vector2
 class vector2d(object):
+    """Mutable point used by the editor's node layout and drag handling."""
+
     def __init__(self, X, Y):
+        """Store the point's screen coordinates."""
         self.x = X
         self.y = Y
 
@@ -34,27 +37,30 @@ except Exception as e:
     print("Font error:", e)
     exit(1)
 
-# Global variables
+# Editor interaction state: selected node, connection gesture, and cursor position.
 mouseOn = -1
 cstate = -1
 cswitch = 0
 selected = 0
 onbutton = 0
 mPos = vector2d(0, 0)
-create_neuron_type = 0
+create_neuron_type = 0  # Node type assigned when the user clicks empty graph space.
 
 # Helper function to calculate distance (replacing vmath.cDist if needed)
 def cDist(pos1, pos2):
+    """Return Euclidean distance between two editor points."""
     return ((pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2) ** 0.5
 
 def status(ann):
-
+    """Compatibility hook retained for the editor entry point."""
     global cstate
 
 def clear():
+    """Restore the editor's static graph background."""
     w.blit(background, (0, 0))
 
 def circle(pos, r, c):
+    """Draw the legacy circular node marker and return its hover state."""
     global mPos
     g = 0
     if c < 0:
@@ -76,6 +82,7 @@ def circle(pos, r, c):
     return onmouse
 
 def drawNeuron(pos, size, value, shape):
+    """Draw a node using its layer shape and current activation brightness."""
     hovered = cDist(pos, mPos) < size
     radius = size - 4 if hovered else size
     center = (int(pos.x), int(pos.y))
@@ -101,6 +108,7 @@ def drawNeuron(pos, size, value, shape):
     return hovered
 
 def neuronShape(ann, index):
+    """Return the editor shape implied by the node's hidden/input/output layer."""
     if index < ann.hiddenSize:
         return "circle"
     if index < ann.hiddenSize + len(ann.poly) + 2:
@@ -108,6 +116,7 @@ def neuronShape(ann, index):
     return "square"
 
 def moveCreaturePoint(ann, neuron_index):
+    """Update morphology when dragging a sensor or morphology-backed thruster."""
     sensor_start = ann.hiddenSize
     output_start = sensor_start + len(ann.poly) + 2
     if sensor_start <= neuron_index < sensor_start + len(ann.poly):
@@ -155,9 +164,11 @@ def moveCreaturePoint(ann, neuron_index):
             )
 
 def line(frm, to, color=(255, 255, 255)):
+    """Draw a connection between two editor coordinates."""
     pygame.draw.line(w, color, (frm.x, frm.y), (to.x, to.y))
 
 def connectionColor(weight, min_weight, max_weight):
+    """Map a connection weight to a grayscale brightness within the graph range."""
     if max_weight == min_weight:
         brightness = 255
     else:
@@ -166,11 +177,13 @@ def connectionColor(weight, min_weight, max_weight):
     return (brightness, brightness, brightness)
 
 def text(msg, pos, c, s):
+    """Render a compact label beside a graph node."""
     text_font = font if s == 16 else ui_font_9 if s <= 10 else ui_font_10
     text_surface = text_font.render(msg, True, c)
     w.blit(text_surface, (pos.x + 16, pos.y - 11))
 
 def drawButton(name, rect, mouse_pos):
+    """Draw a sidebar button and report whether the pointer is over it."""
     hovered = rect.collidepoint(mouse_pos)
     fill = (28, 57, 70) if hovered else (15, 25, 39)
     edge = (70, 220, 205) if hovered else (35, 75, 88)
@@ -181,6 +194,7 @@ def drawButton(name, rect, mouse_pos):
     return hovered
 
 def drawThrusterDirection(ann, output_index):
+    """Draw an output arrow from its morphology or editor-position direction."""
     output_start = ann.hiddenSize + len(ann.poly) + 2
     if output_index == 4:
         return
@@ -227,6 +241,7 @@ def drawThrusterDirection(ann, output_index):
         )
 
 def createNeuronAt(ann, position, neuron_type):
+    """Insert a node into its layer, adding morphology for sensor nodes."""
     if neuron_type == 0:
         neuron = ann.insertNeuron(ann.hiddenSize, neuron_type, position)
         ann.hiddenSize += 1
@@ -260,9 +275,11 @@ def createNeuronAt(ann, position, neuron_type):
     return ann.insertNeuron(len(ann.neurons), neuron_type, position)
 
 def gui(ann):
+    """Legacy UI hook; sidebar rendering is performed directly by gloop."""
     pass  # Placeholder if needed
 
 def gloop(ann, events):
+    """Process one frame of editor input and draw the graph and sidebar."""
     global w, mPos, mouseOn, cstate, cswitch, selected, onbutton, create_neuron_type
     onbutton = 0
 
@@ -279,6 +296,7 @@ def gloop(ann, events):
 
     left_down = pygame.mouse.get_pressed()[0]
     right_down = pygame.mouse.get_pressed()[2]
+    # Use button-down events for one-shot actions; held state is reserved for dragging.
     left_clicks = [
         event.pos
         for event in events
@@ -306,6 +324,7 @@ def gloop(ann, events):
         if drawNeuron(neuron.pos, 16, neuron.out, neuronShape(ann, index)):
             mouseOn = neuron.id
         text(str(round(neuron.out, 3)), neuron.pos, (255, 0, 0), 8)
+        # The simulation's output layer begins after hidden nodes and all sensor inputs.
         output_start = ann.hiddenSize + len(ann.poly) + 2
         if index >= output_start:
             drawThrusterDirection(ann, index - output_start)

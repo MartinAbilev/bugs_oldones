@@ -2,7 +2,10 @@ import pygame
 
 
 class SimulationUI:
+    """Draw the simulation arena, sidebar dashboard, and neural activity map."""
+
     def __init__(self):
+        """Create cached arena graphics, fonts, and interactive control hitboxes."""
         self.background = pygame.Surface((640, 480))
         self.background.fill((7, 12, 21))
         for grid_x in range(25, 500, 25):
@@ -46,16 +49,18 @@ class SimulationUI:
         self.font_12 = pygame.font.SysFont("arial", 12)
         self.font_14 = pygame.font.SysFont("arial", 14, bold=True)
         self.font_20 = pygame.font.SysFont("arial", 20, bold=True)
-        self.radiation_slider = pygame.Rect(519, 137, 108, 8)
+        self.radiation_slider = pygame.Rect(519, 137, 108, 8)  # Visible slider track.
         self.radiation_slider_hitbox = pygame.Rect(510, 116, 121, 40)
-        self.edit_button = pygame.Rect(516, 410, 112, 29)
+        self.edit_button = pygame.Rect(516, 410, 112, 29)  # Opens the network editor.
 
     @staticmethod
     def text(surface, message, position, color, font):
+        """Render one UI label onto a surface."""
         surface.blit(font.render(message, True, color), position)
 
     @staticmethod
     def draw_godhand(surface, position):
+        """Draw the red cursor orb that creatures can detect with red sensors."""
         x, y = map(round, position)
         pygame.draw.circle(surface, (255, 45, 65), (x, y), 14, 2)
         pygame.draw.circle(surface, (255, 45, 65), (x, y), 8, 1)
@@ -63,6 +68,7 @@ class SimulationUI:
         pygame.draw.circle(surface, (255, 220, 220), (x - 1, y - 1), 1)
 
     def draw_neural_activity(self, surface, objects):
+        """Show each living creature's neuron activations in type-colored rows."""
         bounds = pygame.Rect(8, 407, 484, 67)
         pygame.draw.rect(surface, (6, 15, 21), bounds, border_radius=6)
         pygame.draw.rect(surface, (23, 86, 81), bounds, 1, border_radius=6)
@@ -95,6 +101,7 @@ class SimulationUI:
         if neuron_count == 0:
             return
 
+        # Node order is hidden layer, morphology/velocity inputs, then outputs.
         hidden_end = min(network.hiddenSize, neuron_count)
         input_end = min(hidden_end + len(network.poly) + 2, neuron_count)
         row_top = 424
@@ -148,6 +155,7 @@ class SimulationUI:
                 )
 
     def draw_dashboard(self, surface, active_count, best_live, record, mutation_rate, objects):
+        """Render status, mutation controls, lifetime values, and neural signals."""
         text = self.text
         panel = pygame.Rect(505, 0, 135, 480)
         pygame.draw.rect(surface, (10, 17, 29), panel)

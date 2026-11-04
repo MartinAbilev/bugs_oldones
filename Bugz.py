@@ -18,18 +18,21 @@ screen = pygame.display.set_mode((640, 480))
 pygame.display.set_caption("BUGZ // NEURAL SWARM")
 clock = pygame.time.Clock()
 ui = SimulationUI()
+thruster_overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
 
+# The contact listener keeps this shared list to map Box2D bodies back to creatures.
 objects = []
 world = PhysicsWorld(objects)
-best_network = None
-generation_requested = False
-next_id = 0
-life_time_record = 0
-radiation = 1.0
-radiation_slider_dragging = False
+best_network = None  # Network with the longest lifetime in the current run.
+generation_requested = False  # Set by the lifetime callback to start a new generation.
+next_id = 0  # Unique creature/body ID counter.
+life_time_record = 0  # Best lifetime reached since the last record reset.
+radiation = 1.0  # Shared mutation scale controlled by the sidebar slider.
+radiation_slider_dragging = False  # Keeps slider updates active while the mouse is held.
 
 
 def on_lifetime_update(creature, alive_count):
+    """Track the best creature and decide when the current generation should end."""
     global best_network, generation_requested, life_time_record
     if creature.time > life_time_record:
         life_time_record = creature.time
@@ -41,6 +44,7 @@ def on_lifetime_update(creature, alive_count):
 
 
 def spawn_creature(position, network_file):
+    """Load a network and add its creature body to the shared simulation."""
     global next_id
     creature = Creature(
         position,
@@ -55,6 +59,7 @@ def spawn_creature(position, network_file):
 
 
 def on_birth(parent):
+    """Create a mutated child network and spawn its creature."""
     child_network = copy.deepcopy(parent.Ann)
     child_network.randomizeWeights(radiation)
     child_network.saveNet("child")
@@ -62,6 +67,7 @@ def on_birth(parent):
 
 
 def create_next_generation():
+    """Persist the best network and seed the next group with mutations."""
     global next_id, generation_requested
     best_network.saveNet("Best")
     for x in range(6):
@@ -80,6 +86,7 @@ for x in range(3):
 
 
 def open_editor():
+    """Run the network editor, then apply its saved network to living creatures."""
     global best_network
     editor_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bugEdit.py")
     subprocess.run(
@@ -96,6 +103,7 @@ def open_editor():
 
 running = True
 while running:
+    # The current input state controls godhand sensing, mutations, and Radiation.
     edit_requested = False
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -137,6 +145,7 @@ while running:
     if mouse_pos[0] < 500 and mouse_pos[1] < 400:
         ui.draw_godhand(screen, mouse_pos)
 
+    thruster_overlay.fill((0, 0, 0, 0))
     pixel_array = pygame.surfarray.pixels3d(screen)
     to_remove = []
     for creature in objects:
@@ -147,11 +156,11 @@ while running:
         if creature.death == 1:
             creature.body.active = False
             to_remove.append(creature)
+        else:
+            creature.draw_thruster_indicators(thruster_overlay)
     del pixel_array
 
-    for creature in objects:
-        if creature.death == 0:
-            creature.draw_thruster_indicators(screen)
+    screen.blit(thruster_overlay, (0, 0))
     for creature in to_remove:
         objects.remove(creature)
 

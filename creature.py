@@ -8,6 +8,8 @@ from simulation_utils import dcircle, rotate_polygon, vector2d
 
 
 class Creature:
+    """A Box2D body paired with its neural controller and morphology."""
+
     def __init__(
         self,
         position,
@@ -17,12 +19,13 @@ class Creature:
         on_lifetime_update,
         on_birth,
     ):
+        """Load a network and create its dynamic body and contact fixture."""
         self.oId = creature_id
         self.death = 0
         self.Ann = Ann2()
         self.Ann.loadNet(network_file)
         self.step = 0
-        self.time = 0
+        self.time = 0  # Frames survived; used for best-lifetime tracking.
         self.lives = 3
         self.birthTimer = 0
         self.r = 10
@@ -41,12 +44,15 @@ class Creature:
         self.body.angularDamping = 0.99
 
     def angle(self):
+        """Return the body's current orientation in degrees."""
         return math.degrees(self.body.angle)
 
     def ann_step(self):
+        """Advance the creature's layered neural network by one simulation step."""
         self.Ann.annStep()
 
     def read_color(self, pixel_array, center, point_index):
+        """Read the red-channel sensor value at one morphology point."""
         x = int(center.x + self.poly[point_index][0] * 1.2)
         y = int(center.y + self.poly[point_index][1] * 1.2)
         x = max(0, min(639, x))
@@ -58,6 +64,7 @@ class Creature:
             return 0
 
     def sense(self, pixel_array, alive_count):
+        """Sample sensors, evaluate outputs, and apply thrust for this frame."""
         if self.death != 0:
             return
 
@@ -78,6 +85,7 @@ class Creature:
             (self.body.linearVelocity.x + self.body.linearVelocity.y) / 2,
         )
 
+        # Outputs are thrusters except output 4, reserved for angular rotation.
         output_start = len(self.poly) + 2 + hidden_size
         self.ann_step()
         power = 100
@@ -95,6 +103,7 @@ class Creature:
         self.time += 1
 
     def draw(self, surface):
+        """Render the creature and trigger periodic offspring creation."""
         if self.lives <= 0:
             self.death = 1
         if self.death != 0:
@@ -137,6 +146,7 @@ class Creature:
             self.on_birth(self)
 
     def draw_thruster_indicators(self, surface):
+        """Draw direction arrows for every thruster; highlight active outputs."""
         output_start = self.Ann.hiddenSize + len(self.poly) + 2
         outputs = self.Ann.neurons[output_start:]
         thrusters = [
@@ -184,6 +194,7 @@ class Creature:
                 )
 
     def _thruster_vectors(self, output_indices):
+        """Map actuator outputs to rotated local vectors using editor positions."""
         morphology_points = self.Ann.poly[:4]
         morphology_radius = (
             sum(math.hypot(x, y) for x, y in morphology_points)
@@ -227,6 +238,7 @@ class Creature:
         return vectors
 
     def truster(self, activations, rotation):
+        """Apply angular rotation and each indexed linear thruster impulse."""
         trust_center = b2Vec2(self.centerpos.x, self.centerpos.y)
         self.body.ApplyAngularImpulse(rotation, wake=True)
         vectors = self._thruster_vectors([index for index, _ in activations])

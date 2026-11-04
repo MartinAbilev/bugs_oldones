@@ -3,16 +3,22 @@ import random
 import json
 
 class vector2d(object):
+    """Simple mutable coordinate used for editor neuron positions."""
+
     def __init__(self, X, Y):
+        """Store x/y coordinates."""
         self.x = X
         self.y = Y
 
 class Neuron2:
+    """A weighted neural node plus its editor position and relationship metadata."""
+
     def __init__(self, Id):
+        """Initialize an unconnected node with neutral activation."""
         self.id = Id
-        self.type = 0
+        self.type = 0  # 0 hidden, 1 input/sensor, 2 output.
         self.hiddenSize = 0
-        self.conections = []
+        self.conections = []  # Source node indices, paired by position with weights.
         self.weights = []
         self.out = 0.001
         self.pos = vector2d(8, 8)
@@ -21,12 +27,14 @@ class Neuron2:
         self.lowest = []
 
     def step(self, Neurons):
+        """Update this node from the current outputs of its connected sources."""
         neuron_outputs = [neuron.out for neuron in Neurons]
         self.out = self.activation(neuron_outputs)
         Neurons[self.id].out = self.out
         return Neurons
 
     def activation(self, neuron_outputs, source_limit=None):
+        """Apply weighted tanh activation, optionally excluding later-layer sources."""
         value = 0
         for index, con in enumerate(self.conections):
             if source_limit is None or 0 <= con < source_limit:
@@ -34,20 +42,26 @@ class Neuron2:
         return math.tanh(value * 5)
 
 class Ann2:
+    """Neural network, including node layers and creature morphology."""
+
     def __init__(self):
+        """Create an empty network with default creature colors."""
         self.maxN = 0
-        self.hiddenSize = 0
+        self.hiddenSize = 0  # Hidden nodes occupy the first hiddenSize entries.
         self.colorR = 255
         self.colorG = 0
         self.colorB = 0
-        self.poly = []
+        self.poly = []  # Sensor/thruster morphology points used by the simulation.
         self.neurons = []
 
     def setPoly(self, p):
+        """Replace the creature's local-space morphology points."""
         self.poly = p
 
     def annStep(self):
+        """Evaluate hidden nodes first, then outputs, using the fixed layer layout."""
         hidden_end = min(max(self.hiddenSize, 0), len(self.neurons))
+        # Two extra input slots after morphology sensors carry angular/linear velocity.
         sensor_end = min(hidden_end + len(self.poly) + 2, len(self.neurons))
         previous_outputs = [neuron.out for neuron in self.neurons]
 
@@ -63,10 +77,12 @@ class Ann2:
             neuron.out = neuron.activation(layer_outputs, sensor_end)
 
     def connect(self, inpA, toB, w):
+        """Add a weighted source-to-target link using the legacy connection layout."""
         self.neurons[inpA].conections.append(toB)
         self.neurons[inpA].weights.append(w)
 
     def connectAllToAll(self):
+        """Replace links with all source-to-hidden/output links at unit weight."""
         neuron_count = len(self.neurons)
         hidden_end = min(max(self.hiddenSize, 0), neuron_count)
         source_end = min(hidden_end + len(self.poly) + 2, neuron_count)
@@ -87,6 +103,7 @@ class Ann2:
                 self.neurons[source_index].child.append(target_index)
 
     def insertNeuron(self, index, neuron_type, position):
+        """Insert a node into its layer and shift existing node references."""
         neuron = Neuron2(index)
         neuron.type = neuron_type
         neuron.pos = vector2d(float(position.x), float(position.y))
@@ -111,10 +128,12 @@ class Ann2:
         return neuron
 
     def outSet(self, Id, value):
+        """Set a node's externally supplied input value."""
         self.neurons[Id].out = value
 
     # the sequence how nns are creted important grid inputs and outputs !!!
     def createGrid(self, n):
+        """Append an n-by-n hidden layer and fully connect the new hidden nodes."""
         self.hiddenSize = n * n
         i = self.maxN
         offsetX = 200
@@ -133,6 +152,7 @@ class Ann2:
                         self.connect(neuron.id, con.id, 1)
 
     def createInputs(self, n):
+        """Append n input nodes and connect them to the existing hidden layer."""
         i = self.maxN
         offsetX = 100
         offsetY = 100
@@ -153,6 +173,7 @@ class Ann2:
                         self.connect(neuron.id, con.id, 1)
 
     def createOutputs(self, n):
+        """Append n output nodes and connect them to existing nodes."""
         i = self.maxN
         offsetX = 200
         offsetY = 50
@@ -172,6 +193,7 @@ class Ann2:
                         self.connect(con.id, neuron.id, 1)
 
     def sort(self):
+        """Arrange hidden nodes centrally and map sensors/outputs around morphology."""
         neuron_count = len(self.neurons)
         hidden_count = min(max(self.hiddenSize, 0), neuron_count)
         input_count = min(len(self.poly) + 2, neuron_count - hidden_count)
@@ -241,6 +263,7 @@ class Ann2:
                 )
 
     def loadNet(self, fname):
+        """Load a network JSON file and discard output links to invalid later layers."""
         self.neurons = []
         with open(fname + '.json', 'r') as f:
             data = json.load(f)
@@ -280,6 +303,7 @@ class Ann2:
             neuron.weights = [weight for _, weight in connections]
 
     def saveNet(self, fname):
+        """Serialize morphology, node metadata, positions, and links to JSON."""
         # Prepare data structure for JSON
         data = {
             'colorR': self.colorR,
@@ -309,6 +333,7 @@ class Ann2:
             json.dump(data, f, indent=4)
 
     def randomizeDNA(self, factor):
+        """Mutate creature colors and morphology, then refresh editor marker positions."""
         self.colorG = max(0, min(255, round(self.colorG + random.randint(-100, 100) * factor)))
         self.colorB = max(0, min(255, round(self.colorB + random.randint(-100, 100) * factor)))
         i = 0
@@ -323,6 +348,7 @@ class Ann2:
         self.syncMorphologyPositions()
 
     def syncMorphologyPositions(self):
+        """Keep sensor markers and morphology-backed thruster markers aligned."""
         center_x = 320
         center_y = 240
         max_poly_extent = max(
@@ -351,6 +377,7 @@ class Ann2:
                 )
 
     def randomizeWeights(self, factor):
+        """Mutate morphology and connection weights in proportion to factor."""
         if factor <= 0:
             return
 
