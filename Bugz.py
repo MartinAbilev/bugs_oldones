@@ -11,7 +11,6 @@ from NeuralNetwork import Ann2
 from creature import Creature
 from physics import PhysicsWorld
 from simulation_ui import SimulationUI
-from simulation_utils import vector2d
 
 
 pygame.init()
@@ -96,7 +95,6 @@ def open_editor():
 
 
 running = True
-mouse_position = vector2d(0, 0)
 while running:
     edit_requested = False
     for event in pygame.event.get():
@@ -113,7 +111,6 @@ while running:
         open_editor()
 
     mouse_pos = pygame.mouse.get_pos()
-    mouse_position = vector2d(mouse_pos[0], mouse_pos[1])
     screen.blit(ui.background, (0, 0))
 
     right_click = pygame.mouse.get_pressed()[2]
@@ -136,6 +133,9 @@ while running:
         if creature.death == 0:
             creature.draw(screen)
             alive_count += 1
+
+    if mouse_pos[0] < 500 and mouse_pos[1] < 400:
+        ui.draw_godhand(screen, mouse_pos)
 
     pixel_array = pygame.surfarray.pixels3d(screen)
     to_remove = []
@@ -167,29 +167,6 @@ while running:
         radiation,
         objects,
     )
-    if mouse_pos[0] < 500 and mouse_pos[1] < 400:
-        pygame.draw.circle(
-            screen,
-            (70, 235, 220),
-            (int(mouse_position.x), int(mouse_position.y)),
-            4,
-            1,
-        )
-        pygame.draw.line(
-            screen,
-            (70, 235, 220),
-            (mouse_position.x - 7, mouse_position.y),
-            (mouse_position.x + 7, mouse_position.y),
-            1,
-        )
-        pygame.draw.line(
-            screen,
-            (70, 235, 220),
-            (mouse_position.x, mouse_position.y - 7),
-            (mouse_position.x, mouse_position.y + 7),
-            1,
-        )
-
     world.world.Step(world.timeStep, 32, 32)
     world.world.ClearForces()
     pygame.display.flip()

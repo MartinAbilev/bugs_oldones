@@ -9,7 +9,7 @@ class SimulationUI:
             pygame.draw.line(self.background, (11, 24, 35), (grid_x, 0), (grid_x, 400))
         for grid_y in range(25, 400, 25):
             pygame.draw.line(self.background, (11, 24, 35), (0, grid_y), (500, grid_y))
-        pygame.draw.rect(self.background, (20, 190, 185), (1, 1, 498, 398), 2)
+        pygame.draw.rect(self.background, (255, 45, 65), (1, 1, 498, 398), 2)
         for corner_x, corner_y, sign_x, sign_y in (
             (8, 8, 1, 1),
             (492, 8, -1, 1),
@@ -18,14 +18,14 @@ class SimulationUI:
         ):
             pygame.draw.line(
                 self.background,
-                (70, 235, 220),
+                (255, 70, 82),
                 (corner_x, corner_y),
                 (corner_x + 12 * sign_x, corner_y),
                 2,
             )
             pygame.draw.line(
                 self.background,
-                (70, 235, 220),
+                (255, 70, 82),
                 (corner_x, corner_y),
                 (corner_x, corner_y + 12 * sign_y),
                 2,
@@ -44,6 +44,14 @@ class SimulationUI:
     @staticmethod
     def text(surface, message, position, color, font):
         surface.blit(font.render(message, True, color), position)
+
+    @staticmethod
+    def draw_godhand(surface, position):
+        x, y = map(round, position)
+        pygame.draw.circle(surface, (255, 45, 65), (x, y), 14, 2)
+        pygame.draw.circle(surface, (255, 45, 65), (x, y), 8, 1)
+        pygame.draw.circle(surface, (255, 30, 55), (x, y), 4)
+        pygame.draw.circle(surface, (255, 220, 220), (x - 1, y - 1), 1)
 
     def draw_neural_activity(self, surface, objects):
         bounds = pygame.Rect(8, 407, 484, 67)
