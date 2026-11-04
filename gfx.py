@@ -18,10 +18,6 @@ w = pygame.display.set_mode((640, 480))
 pygame.display.set_caption("BUGZ // NEURAL LAB")
 background = pygame.Surface((640, 480))
 background.fill((7, 12, 21))
-for grid_x in range(25, 505, 25):
-    pygame.draw.line(background, (11, 24, 35), (grid_x, 0), (grid_x, 480))
-for grid_y in range(25, 480, 25):
-    pygame.draw.line(background, (11, 24, 35), (0, grid_y), (505, grid_y))
 pygame.draw.rect(background, (20, 190, 185), (1, 1, 502, 478), 2)
 pygame.draw.rect(background, (10, 17, 29), (505, 0, 135, 480))
 pygame.draw.line(background, (25, 54, 68), (505, 0), (505, 480), 2)
@@ -45,19 +41,59 @@ selected = 0
 onbutton = 0
 mPos = vector2d(0, 0)
 create_neuron_type = 0  # Node type assigned when the user clicks empty graph space.
+view_zoom = 1.0
+view_pan = vector2d(0, 0)
+last_pan_position = None
 
 # Helper function to calculate distance (replacing vmath.cDist if needed)
 def cDist(pos1, pos2):
     """Return Euclidean distance between two editor points."""
     return ((pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2) ** 0.5
 
+def graphToScreen(position):
+    """Project a saved graph coordinate through the current editor viewport."""
+    return vector2d(
+        position.x * view_zoom + view_pan.x,
+        position.y * view_zoom + view_pan.y,
+    )
+
+def screenToGraph(position):
+    """Convert a screen point back to a persistent graph coordinate."""
+    return vector2d(
+        (position.x - view_pan.x) / view_zoom,
+        (position.y - view_pan.y) / view_zoom,
+    )
+
+def zoomAt(position, wheel_delta):
+    """Zoom around the pointer so the graph point under it stays stationary."""
+    global view_zoom, view_pan
+    graph_position = screenToGraph(position)
+    old_zoom = view_zoom
+    view_zoom = max(0.25, min(3.0, view_zoom * (1.15 ** wheel_delta)))
+    if view_zoom != old_zoom:
+        view_pan.x = position.x - graph_position.x * view_zoom
+        view_pan.y = position.y - graph_position.y * view_zoom
+
 def status(ann):
     """Compatibility hook retained for the editor entry point."""
     global cstate
 
 def clear():
-    """Restore the editor's static graph background."""
+    """Redraw the editor background and its viewport-transformed graph grid."""
     w.blit(background, (0, 0))
+    spacing = 25 * view_zoom
+    pygame.draw.rect(w, (11, 24, 35), (0, 0, 505, 480))
+    w.set_clip(pygame.Rect(0, 0, 505, 480))
+    grid_x = view_pan.x % spacing
+    while grid_x < 505:
+        pygame.draw.line(w, (11, 24, 35), (round(grid_x), 0), (round(grid_x), 480))
+        grid_x += spacing
+    grid_y = view_pan.y % spacing
+    while grid_y < 480:
+        pygame.draw.line(w, (11, 24, 35), (0, round(grid_y)), (505, round(grid_y)))
+        grid_y += spacing
+    w.set_clip(None)
+    pygame.draw.rect(w, (20, 190, 185), (1, 1, 502, 478), 2)
 
 def circle(pos, r, c):
     """Draw the legacy circular node marker and return its hover state."""
@@ -217,10 +253,12 @@ def drawThrusterDirection(ann, output_index):
     direction_x /= direction_length
     direction_y /= direction_length
 
-    start_x = neuron.pos.x + direction_x * 18
-    start_y = neuron.pos.y + direction_y * 18
-    end_x = start_x + direction_x * 11
-    end_y = start_y + direction_y * 11
+    screen_position = graphToScreen(neuron.pos)
+    arrow_scale = view_zoom
+    start_x = screen_position.x + direction_x * 18 * arrow_scale
+    start_y = screen_position.y + direction_y * 18 * arrow_scale
+    end_x = start_x + direction_x * 11 * arrow_scale
+    end_y = start_y + direction_y * 11 * arrow_scale
     angle = math.atan2(direction_y, direction_x)
     pygame.draw.line(
         w,
@@ -281,18 +319,26 @@ def gui(ann):
 def gloop(ann, events):
     """Process one frame of editor input and draw the graph and sidebar."""
     global w, mPos, mouseOn, cstate, cswitch, selected, onbutton, create_neuron_type
+    global last_pan_position, view_pan
     onbutton = 0
 
     mouse_pos = pygame.mouse.get_pos()
     mPos = vector2d(mouse_pos[0], mouse_pos[1])
+    middle_down = pygame.mouse.get_pressed()[1]
 
     for event in events:
         if event.type == pygame.VIDEORESIZE:
             w = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
             pygame.display.set_caption("BUGZ // NEURAL LAB")
         if event.type == pygame.MOUSEWHEEL:
-            if mouseOn >= 0:
-                ann.neurons[mouseOn].out += event.y * 0.1
+            if mouse_pos[0] < 505:
+                zoomAt(mPos, event.y)
+
+    if middle_down and last_pan_position is not None:
+        view_pan.x += mouse_pos[0] - last_pan_position[0]
+        view_pan.y += mouse_pos[1] - last_pan_position[1]
+        mouseOn = -1
+    last_pan_position = mouse_pos if middle_down else None
 
     left_down = pygame.mouse.get_pressed()[0]
     right_down = pygame.mouse.get_pressed()[2]
@@ -303,7 +349,7 @@ def gloop(ann, events):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1
     ]
 
-    if not left_down:
+    if not left_down or middle_down:
         mouseOn = -1
 
     # Keep graph drawing out of the dashboard region.
@@ -315,28 +361,30 @@ def gloop(ann, events):
         for index, c in enumerate(neuron.conections):
             weight = neuron.weights[index]
             line(
-                neuron.pos,
-                ann.neurons[c].pos,
+                graphToScreen(neuron.pos),
+                graphToScreen(ann.neurons[c].pos),
                 connectionColor(weight, min_weight, max_weight),
             )
 
     for index, neuron in enumerate(ann.neurons):
-        if drawNeuron(neuron.pos, 16, neuron.out, neuronShape(ann, index)):
+        screen_position = graphToScreen(neuron.pos)
+        if drawNeuron(screen_position, max(5, round(16 * view_zoom)), neuron.out, neuronShape(ann, index)):
             mouseOn = neuron.id
-        text(str(round(neuron.out, 3)), neuron.pos, (255, 0, 0), 8)
+        text(str(round(neuron.out, 3)), screen_position, (255, 0, 0), 8)
         # The simulation's output layer begins after hidden nodes and all sensor inputs.
         output_start = ann.hiddenSize + len(ann.poly) + 2
         if index >= output_start:
             drawThrusterDirection(ann, index - output_start)
 
-    if mouseOn == -1 and any(pos[0] < 505 for pos in left_clicks):
-        createNeuronAt(ann, vector2d(mouse_pos[0], mouse_pos[1]), create_neuron_type)
+    if not middle_down and mouseOn == -1 and any(pos[0] < 505 for pos in left_clicks):
+        createNeuronAt(ann, screenToGraph(mPos), create_neuron_type)
 
-    if left_down and mouseOn >= 0 and mouse_pos[0] < 505:
+    if left_down and not middle_down and mouseOn >= 0 and mouse_pos[0] < 505:
         old = ann.neurons[mouseOn].pos
-        ann.neurons[mouseOn].pos = vector2d(mPos.x, mPos.y)
+        graph_mouse_position = screenToGraph(mPos)
+        ann.neurons[mouseOn].pos = graph_mouse_position
         moveCreaturePoint(ann, mouseOn)
-        distX = vector2d(mPos.x - old.x, mPos.y - old.y)
+        distX = vector2d(graph_mouse_position.x - old.x, graph_mouse_position.y - old.y)
         for child in ann.neurons[mouseOn].lowest:
             ann.neurons[child].pos = vector2d(
                 ann.neurons[child].pos.x + distX.x,
@@ -424,7 +472,7 @@ def gloop(ann, events):
     if all_to_all_clicked:
         ann.connectAllToAll()
 
-    if right_down and mouseOn >= 0 and cswitch == 0:
+    if not middle_down and right_down and mouseOn >= 0 and cswitch == 0:
         cstate = mouseOn
         cswitch = 1
 
@@ -432,11 +480,11 @@ def gloop(ann, events):
         cstate = -1
         cswitch = 2
 
-    if right_down and mouseOn >= 0 and cswitch == 2:
+    if not middle_down and right_down and mouseOn >= 0 and cswitch == 2:
         cstate = -1
         cswitch = 0
 
-    if right_down and mouseOn >= 0 and cstate >= 0 and cstate != mouseOn and cswitch == 1:
+    if not middle_down and right_down and mouseOn >= 0 and cstate >= 0 and cstate != mouseOn and cswitch == 1:
         ann.connect(mouseOn, cstate, 1)
         ann.neurons[cstate].child.append(mouseOn)
         ann.neurons[mouseOn].parent.append(cstate)
@@ -444,7 +492,7 @@ def gloop(ann, events):
         cswitch = 2
 
     if cswitch == 1:
-        line(ann.neurons[cstate].pos, mPos)
+        line(graphToScreen(ann.neurons[cstate].pos), mPos)
 
     if cswitch == 2 and mouseOn == -1:
         cswitch = 0
