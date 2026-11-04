@@ -459,7 +459,7 @@ def gloop(ann, events):
     if load_clicked:
         ann.loadNet('Best')
     if sort_clicked:
-        ann.sort()
+        ann.sort(create_neuron_type)
     if rand_clicked:
         ann.randomizeWeights(0.1)
     if clear_clicked:

@@ -192,8 +192,8 @@ class Ann2:
                         # so every nuron is appended to out con
                         self.connect(con.id, neuron.id, 1)
 
-    def sort(self):
-        """Arrange hidden nodes centrally and map sensors/outputs around morphology."""
+    def sort(self, neuron_type=None):
+        """Arrange the selected layer: hidden nodes in a grid, inputs/outputs around it."""
         neuron_count = len(self.neurons)
         hidden_count = min(max(self.hiddenSize, 0), neuron_count)
         input_count = min(len(self.poly) + 2, neuron_count - hidden_count)
@@ -205,62 +205,53 @@ class Ann2:
         rows = math.ceil(hidden_count / columns) if columns else 0
         spacing = 48
 
-        for index in range(hidden_count):
-            row = index // columns
-            row_start = row * columns
-            row_length = min(columns, hidden_count - row_start)
-            column = index - row_start
-            self.neurons[index].pos = vector2d(
-                center_x + (column - (row_length - 1) / 2) * spacing,
-                center_y + (row - (rows - 1) / 2) * spacing,
+        if neuron_type in (None, 0):
+            for index in range(hidden_count):
+                row = index // columns
+                row_start = row * columns
+                row_length = min(columns, hidden_count - row_start)
+                column = index - row_start
+                self.neurons[index].pos = vector2d(
+                    center_x + (column - (row_length - 1) / 2) * spacing,
+                    center_y + (row - (rows - 1) / 2) * spacing,
+                )
+
+        if neuron_type in (None, 1):
+            # Keep the input layer readable without changing the creature morphology.
+            for index in range(input_count):
+                angle = -math.pi / 2 + 2 * math.pi * index / max(input_count, 1)
+                self.neurons[hidden_count + index].pos = vector2d(
+                    center_x + 185 * math.cos(angle),
+                    center_y + 185 * math.sin(angle),
+                )
+
+        if neuron_type in (None, 2):
+            max_poly_extent = max(
+                40,
+                max(
+                    (abs(float(coordinate)) for point in self.poly for coordinate in point),
+                    default=0,
+                ),
             )
-
-        max_poly_extent = max(
-            40,
-            max(
-                (abs(float(coordinate)) for point in self.poly for coordinate in point),
-                default=0,
-            ),
-        )
-        input_scale = 185 / max_poly_extent if max_poly_extent else 0
-        output_scale = 225 / max_poly_extent if max_poly_extent else 0
-        mapped_input_count = len(self.poly) if max_poly_extent else 0
-
-        for index in range(input_count):
-            neuron = self.neurons[hidden_count + index]
-            if index < mapped_input_count:
-                x, y = self.poly[index]
-                neuron.pos = vector2d(
-                    center_x + float(x) * input_scale,
-                    center_y + float(y) * input_scale,
-                )
-            else:
-                extra_index = index - mapped_input_count
-                extra_count = input_count - mapped_input_count
-                angle = 2 * math.pi * extra_index / max(extra_count, 1)
-                neuron.pos = vector2d(
-                    center_x + 140 * math.cos(angle),
-                    center_y + 140 * math.sin(angle),
-                )
-
-        output_count = neuron_count - output_start
-        mapped_output_count = min(4, len(self.poly)) if max_poly_extent else 0
-        for index in range(output_count):
-            neuron = self.neurons[output_start + index]
-            if index < mapped_output_count:
-                x, y = self.poly[index]
-                neuron.pos = vector2d(
-                    center_x + float(x) * output_scale,
-                    center_y + float(y) * output_scale,
-                )
-            else:
-                extra_index = index - mapped_output_count
-                extra_count = output_count - mapped_output_count
-                angle = -math.pi / 2 + 2 * math.pi * extra_index / max(extra_count, 1)
-                neuron.pos = vector2d(
-                    center_x + 225 * math.cos(angle),
-                    center_y + 225 * math.sin(angle),
-                )
+            output_scale = 225 / max_poly_extent
+            output_count = neuron_count - output_start
+            mapped_output_count = min(4, len(self.poly))
+            for index in range(output_count):
+                neuron = self.neurons[output_start + index]
+                if index < mapped_output_count:
+                    x, y = self.poly[index]
+                    neuron.pos = vector2d(
+                        center_x + float(x) * output_scale,
+                        center_y + float(y) * output_scale,
+                    )
+                else:
+                    extra_index = index - mapped_output_count
+                    extra_count = output_count - mapped_output_count
+                    angle = -math.pi / 2 + 2 * math.pi * extra_index / max(extra_count, 1)
+                    neuron.pos = vector2d(
+                        center_x + 225 * math.cos(angle),
+                        center_y + 225 * math.sin(angle),
+                    )
 
     def loadNet(self, fname):
         """Load a network JSON file and discard output links to invalid later layers."""
