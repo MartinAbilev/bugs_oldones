@@ -66,6 +66,26 @@ class Ann2:
         self.neurons[inpA].conections.append(toB)
         self.neurons[inpA].weights.append(w)
 
+    def connectAllToAll(self):
+        neuron_count = len(self.neurons)
+        hidden_end = min(max(self.hiddenSize, 0), neuron_count)
+        source_end = min(hidden_end + len(self.poly) + 2, neuron_count)
+
+        for neuron in self.neurons:
+            neuron.conections = []
+            neuron.weights = []
+            neuron.parent = []
+            neuron.child = []
+            neuron.lowest = []
+
+        for target_index in list(range(hidden_end)) + list(range(source_end, neuron_count)):
+            target = self.neurons[target_index]
+            for source_index in range(source_end):
+                target.conections.append(source_index)
+                target.weights.append(1.0)
+                target.parent.append(source_index)
+                self.neurons[source_index].child.append(target_index)
+
     def insertNeuron(self, index, neuron_type, position):
         neuron = Neuron2(index)
         neuron.type = neuron_type

@@ -372,6 +372,9 @@ def gloop(ann, events):
         if create_neuron_type == neuron_type:
             pygame.draw.rect(w, (70, 220, 205), rect, 2, border_radius=5)
 
+    all_to_all_button = pygame.Rect(516, 435, 111, 25)
+    drawButton("ALL-TO-ALL", all_to_all_button, mouse_pos)
+
     save_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "SAVE")
     load_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "LOAD")
     sort_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "SORT")
@@ -381,6 +384,7 @@ def gloop(ann, events):
     for _, neuron_type, rect in creation_specs:
         if any(rect.collidepoint(pos) for pos in left_clicks):
             create_neuron_type = neuron_type
+    all_to_all_clicked = any(all_to_all_button.collidepoint(pos) for pos in left_clicks)
 
     if save_clicked:
         ann.saveNet('Best')
@@ -398,6 +402,8 @@ def gloop(ann, events):
         ann.poly = []
     if grid_clicked:
         ann.createGrid(6)
+    if all_to_all_clicked:
+        ann.connectAllToAll()
 
     if right_down and mouseOn >= 0 and cswitch == 0:
         cstate = mouseOn
