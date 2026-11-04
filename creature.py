@@ -146,9 +146,6 @@ class Creature:
         ]
         vectors = self._thruster_vectors([index for index, _ in thrusters])
         for (_, activation), (vertex_x, vertex_y) in zip(thrusters, vectors):
-            if abs(activation) < 0.05:
-                continue
-
             vector_length = math.hypot(vertex_x, vertex_y)
             if vector_length == 0:
                 continue
@@ -156,7 +153,7 @@ class Creature:
             direction = 1 if activation > 0 else -1
             start_x = self.centerpos.x + vertex_x
             start_y = self.centerpos.y + vertex_y
-            arrow_length = 2 + 6 * min(abs(activation), 1)
+            arrow_length = 8
             end_x = start_x + direction * vertex_x / vector_length * arrow_length
             end_y = start_y + direction * vertex_y / vector_length * arrow_length
             start = (round(start_x), round(start_y))
@@ -166,22 +163,24 @@ class Creature:
             arrow_head_length = 3
             base_x = end_x - arrow_head_length * math.cos(angle)
             base_y = end_y - arrow_head_length * math.sin(angle)
+            color = (255, 255, 0) if abs(activation) >= 0.05 else (90, 150, 170)
+            line_width = 2 if abs(activation) >= 0.05 else 1
             pygame.draw.line(
                 surface,
-                (255, 255, 0),
+                color,
                 start,
                 (round(base_x), round(base_y)),
-                1,
+                line_width,
             )
             for side in (-1, 1):
                 head_x = base_x + side * arrow_head_length / 2 * math.sin(angle)
                 head_y = base_y - side * arrow_head_length / 2 * math.cos(angle)
                 pygame.draw.line(
                     surface,
-                    (255, 255, 0),
+                    color,
                     end,
                     (round(head_x), round(head_y)),
-                    1,
+                    line_width,
                 )
 
     def _thruster_vectors(self, output_indices):
