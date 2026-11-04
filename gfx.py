@@ -1,3 +1,5 @@
+import math
+
 import pygame
 from NeuralNetwork import *  # Assuming this includes Neuron, NeuralNetwork, etc.
 
@@ -39,6 +41,7 @@ cswitch = 0
 selected = 0
 onbutton = 0
 mPos = vector2d(0, 0)
+create_neuron_type = 0
 
 # Helper function to calculate distance (replacing vmath.cDist if needed)
 def cDist(pos1, pos2):
@@ -177,11 +180,90 @@ def drawButton(name, rect, mouse_pos):
     w.blit(label, label.get_rect(center=rect.center))
     return hovered
 
+def drawThrusterDirection(ann, output_index):
+    output_start = ann.hiddenSize + len(ann.poly) + 2
+    if output_index == 4:
+        return
+
+    neuron = ann.neurons[output_start + output_index]
+    if output_index < 4 and output_index < len(ann.poly):
+        direction_x, direction_y = ann.poly[output_index]
+    else:
+        direction_x = neuron.pos.x - 320
+        direction_y = neuron.pos.y - 240
+
+    direction_length = (direction_x ** 2 + direction_y ** 2) ** 0.5
+    if direction_length == 0:
+        return
+
+    activation = neuron.out
+    if abs(activation) >= 0.05 and activation < 0:
+        direction_x = -direction_x
+        direction_y = -direction_y
+    direction_x /= direction_length
+    direction_y /= direction_length
+
+    start_x = neuron.pos.x + direction_x * 18
+    start_y = neuron.pos.y + direction_y * 18
+    end_x = start_x + direction_x * 11
+    end_y = start_y + direction_y * 11
+    angle = math.atan2(direction_y, direction_x)
+    pygame.draw.line(
+        w,
+        (255, 220, 90),
+        (round(start_x), round(start_y)),
+        (round(end_x), round(end_y)),
+        2,
+    )
+    for side in (-1, 1):
+        head_x = end_x - 4 * math.cos(angle) + side * 2 * math.sin(angle)
+        head_y = end_y - 4 * math.sin(angle) - side * 2 * math.cos(angle)
+        pygame.draw.line(
+            w,
+            (255, 220, 90),
+            (round(end_x), round(end_y)),
+            (round(head_x), round(head_y)),
+            2,
+        )
+
+def createNeuronAt(ann, position, neuron_type):
+    if neuron_type == 0:
+        neuron = ann.insertNeuron(ann.hiddenSize, neuron_type, position)
+        ann.hiddenSize += 1
+        return neuron
+
+    if neuron_type == 1:
+        extent = max(
+            40,
+            max(
+                (abs(float(coordinate)) for point in ann.poly for coordinate in point),
+                default=0,
+            ),
+        )
+        point = [
+            (position.x - 320) * extent / 185,
+            (position.y - 240) * extent / 185,
+        ]
+        sensor_index = ann.hiddenSize + len(ann.poly)
+        ann.poly.append(point)
+        neuron = ann.insertNeuron(sensor_index, neuron_type, position)
+        ann.syncMorphologyPositions()
+        return neuron
+
+    output_start = ann.hiddenSize + len(ann.poly) + 2
+    if len(ann.neurons) - output_start == 4:
+        ann.insertNeuron(
+            len(ann.neurons),
+            2,
+            vector2d(320, 240),
+        )
+    return ann.insertNeuron(len(ann.neurons), neuron_type, position)
+
 def gui(ann):
     pass  # Placeholder if needed
 
 def gloop(ann, events):
-    global w, mPos, mouseOn, cstate, cswitch, selected, onbutton
+    global w, mPos, mouseOn, cstate, cswitch, selected, onbutton, create_neuron_type
     onbutton = 0
 
     mouse_pos = pygame.mouse.get_pos()
@@ -224,11 +306,12 @@ def gloop(ann, events):
         if drawNeuron(neuron.pos, 16, neuron.out, neuronShape(ann, index)):
             mouseOn = neuron.id
         text(str(round(neuron.out, 3)), neuron.pos, (255, 0, 0), 8)
+        output_start = ann.hiddenSize + len(ann.poly) + 2
+        if index >= output_start:
+            drawThrusterDirection(ann, index - output_start)
 
     if mouseOn == -1 and any(pos[0] < 505 for pos in left_clicks):
-        ann.neurons.append(Neuron2(ann.maxN))
-        ann.neurons[ann.maxN].pos = vector2d(mouse_pos[0], mouse_pos[1])
-        ann.maxN += 1
+        createNeuronAt(ann, vector2d(mouse_pos[0], mouse_pos[1]), create_neuron_type)
 
     if left_down and mouseOn >= 0 and mouse_pos[0] < 505:
         old = ann.neurons[mouseOn].pos
@@ -278,12 +361,26 @@ def gloop(ann, events):
     for label, rect in button_specs:
         drawButton(label, rect, mouse_pos)
 
+    w.blit(ui_font_9.render("CREATE NODE TYPE", True, (130, 158, 177)), (520, 330))
+    creation_specs = [
+        ("HIDDEN", 0, pygame.Rect(516, 347, 111, 23)),
+        ("SENSOR", 1, pygame.Rect(516, 375, 111, 23)),
+        ("THRUSTER", 2, pygame.Rect(516, 403, 111, 23)),
+    ]
+    for label, neuron_type, rect in creation_specs:
+        drawButton(label, rect, mouse_pos)
+        if create_neuron_type == neuron_type:
+            pygame.draw.rect(w, (70, 220, 205), rect, 2, border_radius=5)
+
     save_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "SAVE")
     load_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "LOAD")
     sort_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "SORT")
     rand_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "RAND")
     clear_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "CLEAR")
     grid_clicked = any(rect.collidepoint(pos) for pos in left_clicks for label, rect in button_specs if label == "GRID")
+    for _, neuron_type, rect in creation_specs:
+        if any(rect.collidepoint(pos) for pos in left_clicks):
+            create_neuron_type = neuron_type
 
     if save_clicked:
         ann.saveNet('Best')

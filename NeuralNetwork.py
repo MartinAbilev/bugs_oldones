@@ -66,6 +66,30 @@ class Ann2:
         self.neurons[inpA].conections.append(toB)
         self.neurons[inpA].weights.append(w)
 
+    def insertNeuron(self, index, neuron_type, position):
+        neuron = Neuron2(index)
+        neuron.type = neuron_type
+        neuron.pos = vector2d(float(position.x), float(position.y))
+
+        for existing in self.neurons:
+            existing.conections = [
+                connection + 1 if connection >= index else connection
+                for connection in existing.conections
+            ]
+            for relation_name in ("child", "parent", "lowest"):
+                relations = getattr(existing, relation_name)
+                setattr(
+                    existing,
+                    relation_name,
+                    [relation + 1 if relation >= index else relation for relation in relations],
+                )
+
+        self.neurons.insert(index, neuron)
+        for neuron_id, existing in enumerate(self.neurons):
+            existing.id = neuron_id
+        self.maxN = len(self.neurons)
+        return neuron
+
     def outSet(self, Id, value):
         self.neurons[Id].out = value
 

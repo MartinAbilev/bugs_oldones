@@ -81,8 +81,15 @@ class Creature:
         output_start = len(self.poly) + 2 + hidden_size
         self.ann_step()
         power = 100
+        outputs = self.Ann.neurons[output_start:]
+        rotation = outputs[4].out * power if len(outputs) > 4 else 0
         self.truster(
-            *(self.Ann.neurons[output_start + index].out * power for index in range(5))
+            [
+                (index, neuron.out * power)
+                for index, neuron in enumerate(outputs)
+                if index != 4
+            ],
+            rotation,
         )
         self.on_lifetime_update(self, alive_count)
         self.time += 1
@@ -131,16 +138,17 @@ class Creature:
 
     def draw_thruster_indicators(self, surface):
         output_start = self.Ann.hiddenSize + len(self.poly) + 2
-        for index in range(min(4, len(self.poly))):
-            output_index = output_start + index
-            if output_index >= len(self.Ann.neurons):
-                break
-
-            activation = self.Ann.neurons[output_index].out
+        outputs = self.Ann.neurons[output_start:]
+        thrusters = [
+            (index, neuron.out)
+            for index, neuron in enumerate(outputs)
+            if index != 4
+        ]
+        vectors = self._thruster_vectors([index for index, _ in thrusters])
+        for (_, activation), (vertex_x, vertex_y) in zip(thrusters, vectors):
             if abs(activation) < 0.05:
                 continue
 
-            vertex_x, vertex_y = self.poly[index]
             vector_length = math.hypot(vertex_x, vertex_y)
             if vector_length == 0:
                 continue
@@ -176,11 +184,55 @@ class Creature:
                     1,
                 )
 
-    def truster(self, a, b, c, d, rotation):
+    def _thruster_vectors(self, output_indices):
+        morphology_points = self.Ann.poly[:4]
+        morphology_radius = (
+            sum(math.hypot(x, y) for x, y in morphology_points)
+            / len(morphology_points)
+            if morphology_points
+            else 10
+        )
+        angle = math.radians(self.angle())
+        cosine = math.cos(angle)
+        sine = math.sin(angle)
+        extra_count = sum(index >= 4 for index in output_indices)
+        extra_index = 0
+        vectors = []
+
+        for index in output_indices:
+            if index < 4 and index < len(self.poly):
+                vectors.append(self.poly[index])
+                continue
+
+            neuron_index = self.Ann.hiddenSize + len(self.Ann.poly) + 2 + index
+            neuron = self.Ann.neurons[neuron_index]
+            direction_x = neuron.pos.x - 320
+            direction_y = neuron.pos.y - 240
+            direction_length = math.hypot(direction_x, direction_y)
+            if direction_length == 0:
+                direction_angle = 2 * math.pi * extra_index / max(extra_count, 1)
+                direction_x = math.cos(direction_angle)
+                direction_y = math.sin(direction_angle)
+                direction_length = 1
+
+            local_x = direction_x * morphology_radius / direction_length
+            local_y = direction_y * morphology_radius / direction_length
+            vectors.append(
+                (
+                    local_x * cosine - local_y * sine,
+                    local_x * sine + local_y * cosine,
+                )
+            )
+            extra_index += 1
+
+        return vectors
+
+    def truster(self, activations, rotation):
         trust_center = b2Vec2(self.centerpos.x, self.centerpos.y)
         self.body.ApplyAngularImpulse(rotation, wake=True)
-        for index, activation in enumerate((a, b, c, d)):
-            trust_vector = b2Vec2(self.poly[index])
+        vectors = self._thruster_vectors([index for index, _ in activations])
+        for (_, activation), vector in zip(activations, vectors):
+            trust_vector = b2Vec2(vector)
             self.body.ApplyLinearImpulse(
                 trust_vector * activation,
                 trust_center,
