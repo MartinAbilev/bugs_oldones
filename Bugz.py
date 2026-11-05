@@ -12,10 +12,15 @@ from creature import Creature
 from physics import PhysicsWorld
 from radiation import RadiationField
 from simulation_ui import SimulationUI
+from viewport import fit_viewport, window_to_logical
 
 
 pygame.init()
-screen = pygame.display.set_mode((640, 480))
+logical_size = (640, 480)
+windowed_size = logical_size
+fullscreen = False
+display_surface = pygame.display.set_mode(windowed_size, pygame.RESIZABLE)
+screen = pygame.Surface(logical_size)
 pygame.display.set_caption("BUGZ // NEURAL SWARM")
 clock = pygame.time.Clock()
 ui = SimulationUI()
@@ -114,23 +119,51 @@ while running:
     # The current input state controls godhand sensing, mutations, and Radiation.
     pause_requested = False
     edit_requested = False
-    mouse_pos = pygame.mouse.get_pos()
+    viewport = fit_viewport(logical_size, display_surface.get_size())
+    mouse_pos = window_to_logical(
+        pygame.mouse.get_pos(),
+        viewport,
+        logical_size,
+    )
+    mouse_inside_viewport = viewport.collidepoint(pygame.mouse.get_pos())
     for event in pygame.event.get():
+        viewport = fit_viewport(logical_size, display_surface.get_size())
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.VIDEORESIZE and not fullscreen:
+            windowed_size = (max(320, event.w), max(240, event.h))
+            display_surface = pygame.display.set_mode(
+                windowed_size,
+                pygame.RESIZABLE,
+            )
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
+            fullscreen = not fullscreen
+            if fullscreen:
+                windowed_size = display_surface.get_size()
+                display_info = pygame.display.Info()
+                display_surface = pygame.display.set_mode(
+                    (display_info.current_w, display_info.current_h),
+                    pygame.FULLSCREEN,
+                )
+            else:
+                display_surface = pygame.display.set_mode(
+                    windowed_size,
+                    pygame.RESIZABLE,
+                )
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 2:
+            event_pos = window_to_logical(event.pos, viewport, logical_size)
             dragged_creature = None
-            if 0 <= event.pos[0] < 500 and 0 <= event.pos[1] < 400:
+            if 0 <= event_pos[0] < 500 and 0 <= event_pos[1] < 400:
                 for creature in reversed(objects):
                     if creature.death != 0:
                         continue
-                    dx = event.pos[0] - creature.body.position.x
-                    dy = event.pos[1] - creature.body.position.y
+                    dx = event_pos[0] - creature.body.position.x
+                    dy = event_pos[1] - creature.body.position.y
                     if dx * dx + dy * dy <= (creature.r + 6) ** 2:
                         dragged_creature = creature
                         creature_drag_offset = b2Vec2(
-                            event.pos[0] - creature.body.position.x,
-                            event.pos[1] - creature.body.position.y,
+                            event_pos[0] - creature.body.position.x,
+                            event_pos[1] - creature.body.position.y,
                         )
                         break
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 2:
@@ -138,13 +171,17 @@ while running:
         elif (
             event.type == pygame.MOUSEBUTTONDOWN
             and event.button == 1
-            and ui.pause_button.collidepoint(event.pos)
+            and ui.pause_button.collidepoint(
+                window_to_logical(event.pos, viewport, logical_size)
+            )
         ):
             pause_requested = True
         elif (
             event.type == pygame.MOUSEBUTTONDOWN
             and event.button == 1
-            and ui.edit_button.collidepoint(event.pos)
+            and ui.edit_button.collidepoint(
+                window_to_logical(event.pos, viewport, logical_size)
+            )
         ):
             edit_requested = True
 
@@ -154,7 +191,13 @@ while running:
     if edit_requested:
         open_editor()
 
-    mouse_pos = pygame.mouse.get_pos()
+    viewport = fit_viewport(logical_size, display_surface.get_size())
+    mouse_pos = window_to_logical(
+        pygame.mouse.get_pos(),
+        viewport,
+        logical_size,
+    )
+    mouse_inside_viewport = viewport.collidepoint(pygame.mouse.get_pos())
     if dragged_creature is not None and pygame.mouse.get_pressed()[1]:
         target_x = mouse_pos[0] - creature_drag_offset.x
         target_y = mouse_pos[1] - creature_drag_offset.y
@@ -168,6 +211,8 @@ while running:
 
     right_click = pygame.mouse.get_pressed()[2]
     left_click = pygame.mouse.get_pressed()[0]
+    if not mouse_inside_viewport:
+        left_click = False
     if not left_click:
         radiation_slider_dragging = False
     elif radiation_slider_dragging or ui.radiation_slider_hitbox.collidepoint(mouse_pos):
@@ -194,7 +239,7 @@ while running:
             creature.draw(screen, update_lifecycle=not simulation_paused)
             alive_count += 1
 
-    if mouse_pos[0] < 500 and mouse_pos[1] < 400:
+    if mouse_inside_viewport and mouse_pos[0] < 500 and mouse_pos[1] < 400:
         ui.draw_godhand(screen, mouse_pos)
         ui.draw_godhand(sensor_surface, mouse_pos)
 
@@ -235,10 +280,15 @@ while running:
         radiation,
         objects,
         paused=simulation_paused,
+        mouse_pos=mouse_pos,
     )
     if not simulation_paused:
         world.world.Step(world.timeStep, 32, 32)
         world.world.ClearForces()
+    display_surface.fill((0, 0, 0))
+    viewport = fit_viewport(logical_size, display_surface.get_size())
+    scaled_screen = pygame.transform.smoothscale(screen, viewport.size)
+    display_surface.blit(scaled_screen, viewport.topleft)
     pygame.display.flip()
 
     if not simulation_paused and (alive_count <= 0 or generation_requested):

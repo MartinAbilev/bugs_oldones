@@ -116,6 +116,8 @@ want to preserve the current networks.
 
 | Input | Effect |
 |---|---|
+| Drag a window edge or corner | Resize the simulation window. The 640×480 playfield and controls scale together while keeping their aspect ratio. |
+| **F11** | Toggle fullscreen and return to the previous window size. |
 | Left mouse button in the play field | Randomizes living creatures' morphology/color and connection weights continuously while held. The selected mutation scale is applied. |
 | Left mouse button on the Radiation slider | Changes mutation strength from 0× to 2× and scales the visual background radiation-particle rate. Drag to adjust it. |
 | Middle mouse button + drag a creature | Moves the grabbed creature through the arena without a jump; its old momentum is cleared. This also works while paused, so you can position a creature's sensors over the godhand or border. |
@@ -503,6 +505,7 @@ and mutation policy are defined directly in `Bugz.py`.
 | `radiation.py` | Background radiation particles and fading cloud-chamber impact trails. |
 | `simulation_ui.py` | Simulation background, godhand drawing, dashboard, controls, lifetime information, and neural activity displays. |
 | `simulation_utils.py` | Shared point type and simple geometry/drawing helpers. |
+| `viewport.py` | Aspect-preserving scaling and mouse-coordinate conversion for the resizable simulation window. |
 | `gfx.py` | Editor window, node drawing, viewport transforms, mouse interaction, morphology preview, sidebar, and network tools. |
 | `bugEdit.py` | Standalone editor entry point; loads `Best.json`, steps the network, and runs the editor event loop. |
 | `createBug.py` | Legacy/default network generator; writes `Best.json` and `child.json`. |

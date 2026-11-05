@@ -169,9 +169,12 @@ class SimulationUI:
         mutation_rate,
         objects,
         paused=False,
+        mouse_pos=None,
     ):
         """Render status, mutation controls, lifetime values, and neural signals."""
         text = self.text
+        if mouse_pos is None:
+            mouse_pos = pygame.mouse.get_pos()
         panel = pygame.Rect(505, 0, 135, 480)
         pygame.draw.rect(surface, (10, 17, 29), panel)
         pygame.draw.line(surface, (25, 54, 68), (505, 0), (505, 480), 2)
@@ -184,7 +187,7 @@ class SimulationUI:
         status_label = "● LIVE" if active_count else "● RESPAWNING"
         pygame.draw.rect(surface, (19, 34, 43), (516, 57, 112, 31), border_radius=6)
         text(surface, status_label, (523, 66), status_color, self.font_10)
-        pause_hovered = self.pause_button.collidepoint(pygame.mouse.get_pos())
+        pause_hovered = self.pause_button.collidepoint(mouse_pos)
         pause_fill = (104, 49, 53) if paused else (28, 57, 70)
         pause_edge = (255, 112, 133) if paused else (70, 220, 205)
         if pause_hovered:
@@ -265,7 +268,7 @@ class SimulationUI:
                 pygame.draw.circle(surface, color, (end_x, y + 3), 2)
 
         pygame.draw.line(surface, (24, 37, 53), (518, 407), (627, 407))
-        hovered = self.edit_button.collidepoint(pygame.mouse.get_pos())
+        hovered = self.edit_button.collidepoint(mouse_pos)
         fill = (24, 76, 80) if hovered else (17, 43, 52)
         border = (70, 220, 205) if hovered else (35, 91, 101)
         pygame.draw.rect(surface, fill, self.edit_button, border_radius=6)
