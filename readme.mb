@@ -3,8 +3,7 @@
 BUGZ is a small Pygame and Box2D experiment in which simple circular creatures
 move through a two-dimensional arena using a neural network. Each creature has
 red-sensitive sensors, a set of thrust outputs, and a mutable morphology. A
-standalone neural-network editor lets you inspect and change the network used by
-the simulation.
+standalone creature editor previews and changes that same simulation creature.
 
 This document describes the program as it currently works: how to run it, what
 the controls do, how the simulation and network fit together, how to edit and
@@ -44,9 +43,8 @@ The important pieces are:
    reserved for rotation.
 5. **The simulation loop** senses, evaluates, applies impulses, draws, tracks
    lifetimes, and creates mutated descendants.
-6. **The editor** visualizes the network and the same creature morphology. Its
-   viewport can be panned and zoomed without changing saved network
-   coordinates.
+6. **The creature editor** runs the actual creature renderer and Box2D body
+   while letting you edit its visible morphology and inherited body color.
 
 The main simulation network is read from `Best.json`. The editor also opens
 `Best.json`; saving in the editor writes that file. `child.json` is used as the
@@ -97,13 +95,13 @@ On Windows, `run.bat` starts the same simulation with:
 python Bugz.py
 ```
 
-Start the network editor directly:
+Start the creature editor directly:
 
 ```powershell
 python bugEdit.py
 ```
 
-The simulation's **EDIT NETWORK** button also starts `bugEdit.py`. The
+The simulation's **CREATURE EDITOR** button also starts `bugEdit.py`. The
 simulation pauses while the editor is open. When the editor closes, the
 simulation reloads `Best.json` into its living creatures.
 
@@ -123,7 +121,7 @@ want to preserve the current networks.
 | Middle mouse button + drag a creature | Moves the grabbed creature through the arena without a jump; its old momentum is cleared. This also works while paused, so you can position a creature's sensors over the godhand or border. |
 | Right mouse button | Resets the displayed lifetime record. |
 | **PAUSE** / **PLAY** button in the LIVE status card | Freezes or resumes physics and creature lifecycle. Sensor sampling, activation updates, and sensor lights continue while paused, so the godhand can be tested against a stationary creature. |
-| Click **EDIT NETWORK** | Pauses the simulation and opens the network editor. |
+| Click **CREATURE EDITOR** | Pauses the simulation and opens the live creature editor. |
 
 The red godhand cursor is drawn in the arena when the pointer is over the play
 field. It is also part of the rendered image that sensors can sample.
@@ -237,10 +235,9 @@ sample_y = cy + rotated_y * 1.2
 ```
 
 The sample is clamped to the screen bounds and reads the **red channel** of the
-pixel at that position. The result is supplied to the sensor neuron. The editor
-shows each morphology sensor marker at the same local offset, transformed
-through the editor viewport. This shared coordinate convention is intended to
-make the sensor dots and physical creature agree.
+pixel at that position. The result is supplied to the sensor neuron. The live
+creature editor uses this same coordinate convention and renderer, so its
+preview shows sensor markers at the positions used by the simulation.
 
 The creature renderer draws a colored circular body, a green center marker, and
 small green morphology markers whose brightness reflects sensor-neuron
@@ -273,7 +270,7 @@ Outputs are indexed from zero at the beginning of the output layer:
 - Every other output is treated as a linear thruster.
 - The first four linear thrusters use the first four `poly` points as their
   local force vectors when those points exist.
-- Additional thrusters derive a direction from their editor node position.
+- Additional thrusters derive a direction from their saved output-node position.
   Their force vector is normalized to the average radius of the first four
   morphology points (or a small fallback radius if there are no points).
 
@@ -348,85 +345,33 @@ generating compatible networks.
 ### Connections
 
 Connections are stored as node indices paired positionally with values in
-`weights`. The editor draws a line for every stored connection and scales its
-brightness according to the connection weight. Its manual connection gesture
-adds a connection with weight 1.0; the **ALL-TO-ALL** tool replaces existing
-links and rebuilds source-to-hidden/output links at unit weight. It also
-refreshes the node relationship lists used by older editor operations.
+`weights`. Structural changes to sensors or outputs rebuild valid source-to-
+hidden/output links at unit weight so the layer indices stay synchronized.
 
-Network evaluation and connection drawing both depend on the saved connection
-lists, so preserve the parallel lengths of each node's `conections` and
-`weights` arrays.
+Network evaluation depends on the saved connection lists, so preserve the
+parallel lengths of each node's `conections` and `weights` arrays.
 
 ## Editor guide
 
-The editor opens `Best.json`. The graph occupies the left side of the window;
-the right sidebar contains network tools and node-creation choices.
+The editor opens `Best.json` beside a live preview that uses the simulation's
+`Creature` renderer, sensor sampling, thruster indicators, and Box2D body.
+Controls are applied directly to that preview:
 
-### Viewport and graph interaction
-
-| Input/action | Effect |
+| Control | Effect |
 |---|---|
-| Middle mouse button + drag | Pan the graph and its grid. |
-| Mouse wheel over graph | Zoom around the pointer. The zoom is bounded between 0.25× and 3×. |
-| Left-click and drag a node | Move that node. The click offset is retained so it does not jump to the cursor. |
-| Left-click empty graph space | Create a node using the currently selected node type. |
-| Right-button drag from one node to another | Connects the nodes with the editor's manual connection operation and a weight of 1.0. |
+| Drag a sensor dot | Moves that sensor and its matching input location. |
+| **ADD SENSOR**, then click in the arena | Adds a sensor at the clicked simulation coordinate. |
+| Select a sensor dot, then **REMOVE SELECTED** | Removes that sensor and its matching input. |
+| **ADD THRUSTER** / **REMOVE EXTRA** | Adds an output or removes an extra output; the first five outputs (four base thrusters and rotation) are protected. |
+| **BODY SIZE** slider | Changes the central radius; the Box2D fixture, mass, and health update with it. |
+| **INHERITED GREEN** / **INHERITED BLUE** sliders | Change the same color channels used by the simulation body renderer. |
+| **PLAY PREVIEW** | Runs the preview's real physics and thrust; pause it to edit a stationary creature. |
+| **SAVE TO BEST** / **RELOAD BEST** | Persists edits to `Best.json` or discards unsaved edits and reloads it. |
 
-Panning and zooming are view transforms, not edits: they do not rewrite stored
-node positions or morphology. Neuron symbols and their hit areas stay a fixed
-screen size while zooming; their positions move with the graph.
-
-The editor's central creature preview, sensor markers, and thruster arrows are
-drawn in the same graph coordinate system as the simulation-local morphology.
-The preview's central body size follows the network's mutated body radius.
-Network-only hidden nodes and velocity inputs remain separate from physical
-creature parts.
-
-### Node shapes and types
-
-- **Hidden** nodes are circles.
-- **Sensor/input** nodes are triangles. Morphology sensors correspond to
-  `poly` points; the two velocity inputs are also part of the input section.
-- **Output** nodes are squares. Thruster arrows show their force directions;
-  output 4 is reserved for rotation and has no linear-thrust arrow.
-
-The create-type buttons select what a click on empty graph space inserts:
-
-- **HIDDEN** adds a node to the hidden section.
-- **SENSOR** adds a morphology point and its matching sensor input.
-- **THRUSTER** adds an output node. If the network does not yet have the
-  reserved rotation slot, the editor inserts that slot before adding the new
-  thruster.
-
-Dragging a physical sensor or a morphology-backed thruster updates `poly` and
-resynchronizes its related markers. Hidden nodes and the velocity input
-markers are not physical morphology.
-
-### Network Tools
-
-| Button | Effect |
-|---|---|
-| **SAVE** | Writes the current network to `Best.json`, then reloads it. |
-| **LOAD** | Reloads `Best.json`, discarding unsaved edits. |
-| **SORT** | Arranges the currently selected create-node type: hidden nodes into a centered grid, input markers according to their physical/velocity roles, or output thrusters according to their simulation force vectors. |
-| **RAND** | Randomizes weights and morphology using a small fixed mutation factor. |
-| **CLEAR** | Removes all nodes, resets the hidden-node count, and clears morphology in memory. It does not save until **SAVE** is used. |
-| **GRID** | Calls the legacy 6 × 6 grid operation: it appends 36 nodes and sets `hiddenSize` to 36. On an existing network, that can change how old nodes are interpreted as layers; save a backup and expect to rebuild/check the network layout afterward. |
-| **ALL-TO-ALL** | Replaces the connection set with unit-weight links from source/input nodes to hidden/output nodes. |
-
-Use **SAVE** to persist changes. Closing the editor without saving leaves
-`Best.json` unchanged. The simulation's edit workflow reloads `Best.json` after
-the editor exits, so only saved changes are applied to living creatures.
-
-### Sorting and physical layout
-
-Sorting is selected by the active create-node type. Hidden nodes are arranged
-as a compact grid around the graph center. Morphology sensor markers stay
-aligned with their corresponding sample points; the velocity inputs are
-distributed around the center because they have no body locations. Output
-thrusters are aligned to the same local force vectors used when the simulation
-applies impulses. Sorting changes display positions, not connection weights.
+Adding a sensor or thruster preserves existing connection weights and adds
+unit-weight links only for the new node; removals remap indices without
+rebuilding the remaining network. Closing without saving leaves `Best.json`
+unchanged. The simulation reloads the saved network after the editor closes.
 
 ## Saved network files
 
@@ -438,15 +383,15 @@ applies impulses. Sorting changes display positions, not connection weights.
 | `hiddenSize` | Number of leading hidden neurons. |
 | `poly` | Array of local `(x, y)` morphology points. Each point has a matching sensor input. |
 | `body_radius` | Central body radius, clamped to 5–20; missing values in older network files default to 10. |
-| `neurons` | Ordered neuron records. Their positions are also used by the editor and to orient additional thrusters. |
+| `neurons` | Ordered neuron records. Their saved positions orient additional thrusters. |
 
 Each neuron record contains:
 
 | Field | Meaning |
 |---|---|
 | `id` | Node's index in the ordered neuron array. |
-| `type` | Editor metadata: 0 hidden, 1 input/sensor, 2 output. |
-| `pos` | Editor graph position as `{ "x": ..., "y": ... }`. |
+| `type` | Node metadata: 0 hidden, 1 input/sensor, 2 output. |
+| `pos` | Saved node position as `{ "x": ..., "y": ... }`; output positions orient additional thrusters. |
 | `conections` | Stored node indices for weighted links. |
 | `weights` | Weights paired by array position with `conections`. |
 | `child`, `parent`, `lowest` | Relationship metadata used by editor/network operations. |
@@ -511,8 +456,8 @@ and mutation policy are defined directly in `Bugz.py`.
 | `simulation_ui.py` | Simulation background, godhand drawing, dashboard, controls, lifetime information, and neural activity displays. |
 | `simulation_utils.py` | Shared point type and simple geometry/drawing helpers. |
 | `viewport.py` | Aspect-preserving scaling and mouse-coordinate conversion for the resizable simulation window. |
-| `gfx.py` | Editor window, node drawing, viewport transforms, mouse interaction, morphology preview, sidebar, and network tools. |
-| `bugEdit.py` | Standalone editor entry point; loads `Best.json`, steps the network, and runs the editor event loop. |
+| `creature_editor.py` | Live creature preview, simulation-aligned morphology controls, resizable editor window, and persistence actions. |
+| `bugEdit.py` | Standalone creature-editor entry point. |
 | `createBug.py` | Legacy/default network generator; writes `Best.json` and `child.json`. |
 | `Best.json` | Main saved network loaded by the simulation and editor. |
 | `child.json` | Temporary saved network used when producing mutated offspring. |
@@ -532,10 +477,10 @@ Best.json
     |       +--> Ann2.annStep() evaluates hidden/output activations
     |       +--> Creature.truster() applies impulses from output activations
     |
-    +--> bugEdit.py loads Ann2
+    +--> bugEdit.py starts CreatureEditor
             |
-            +--> gfx.py displays and edits nodes/morphology
-            +--> SAVE writes Best.json
+            +--> Creature and PhysicsWorld render the live phenotype preview
+            +--> SAVE TO BEST writes Best.json
 ```
 
 ## Troubleshooting and safe editing
@@ -547,34 +492,23 @@ filenames and append `.json` themselves.
 
 ### A change in the editor is not visible in the simulation
 
-Click **SAVE** before closing the editor. The simulation reloads the saved
-`Best.json`, not an unsaved in-memory editor network.
-
-For morphology or sensor-count changes, restart the simulation after editing.
-The current hot-reload path replaces the creature's network, but the creature
-also keeps a cached reference to its morphology list from construction. A
-network reload that replaces that list may therefore leave the existing
-creature's cached morphology out of sync until it is recreated.
+Click **SAVE TO BEST** before closing the editor. The simulation reloads the
+saved `Best.json`, not unsaved in-memory changes. The editor and simulation
+share the same creature renderer and morphology coordinate system.
 
 ### Sensors or thrusters no longer line up
 
 Check that the node order still follows hidden nodes, morphology inputs,
 velocity inputs, and outputs. Sensor node indices must match the order of
-`poly`. Output index 4 is reserved for rotation. Prefer the editor's physical
-node dragging and **SORT** operations so morphology positions can be
-synchronized.
+`poly`. Output index 4 is reserved for rotation. The creature editor updates
+the morphology and corresponding neuron indices together.
 
 ### Network appears to have lost connections
 
 Check that each node's `conections` and `weights` arrays still have matching
-lengths and that their indices refer to valid nodes. **ALL-TO-ALL** replaces
-the existing links; **LOAD** discards unsaved edits.
-
-### Editor graph moves or appears differently after navigation
-
-Middle-mouse drag pans and wheel zooms the graph. Those controls only affect
-the viewport. Neuron symbols remain a fixed size on screen, and panning or
-zooming alone does not modify saved coordinates.
+lengths and that their indices refer to valid nodes. Adding or removing a
+sensor/output rebuilds valid source links; **RELOAD BEST** discards unsaved
+edits.
 
 ### Regenerating a network
 

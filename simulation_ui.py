@@ -32,7 +32,7 @@ class SimulationUI:
         self.radiation_slider = pygame.Rect(519, 137, 108, 8)  # Visible slider track.
         self.radiation_slider_hitbox = pygame.Rect(510, 116, 121, 40)
         self.pause_button = pygame.Rect(582, 59, 42, 27)
-        self.edit_button = pygame.Rect(516, 410, 112, 29)  # Opens the network editor.
+        self.edit_button = pygame.Rect(516, 410, 112, 29)  # Opens the live creature editor.
 
     @staticmethod
     def text(surface, message, position, color, font):
@@ -286,6 +286,6 @@ class SimulationUI:
         border = (70, 220, 205) if hovered else (35, 91, 101)
         pygame.draw.rect(surface, fill, self.edit_button, border_radius=6)
         pygame.draw.rect(surface, border, self.edit_button, 1, border_radius=6)
-        text(surface, "EDIT NETWORK", (535, 418), (224, 245, 242), self.font_10)
+        text(surface, "CREATURE EDITOR", (525, 418), (224, 245, 242), self.font_10)
         text(surface, "LMB mutate   //   RMB reset", (519, 449), (115, 145, 161), self.font_9)
         self.draw_neural_activity(surface, objects)

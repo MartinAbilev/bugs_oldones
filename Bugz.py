@@ -98,7 +98,7 @@ for x in range(3):
 
 
 def open_editor():
-    """Run the network editor, then apply its saved network to living creatures."""
+    """Run the creature editor, then apply its saved network to living creatures."""
     global best_network
     editor_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bugEdit.py")
     subprocess.run(
@@ -112,6 +112,8 @@ def open_editor():
         if creature.death == 0:
             creature.Ann.loadNet("Best")
             creature.update_body_properties()
+            creature.poly = creature.Ann.poly
+            creature.sensor_values = [0] * len(creature.Ann.poly)
 
 
 running = True

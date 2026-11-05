@@ -276,7 +276,7 @@ class Creature:
                 )
 
     def _thruster_vectors(self, output_indices):
-        """Map actuator outputs to rotated local vectors using editor positions."""
+        """Map actuator outputs to rotated local vectors using saved node positions."""
         local_vectors = self.Ann.thrusterVectors(output_indices)
         angle = math.radians(self.angle())
         cosine = math.cos(angle)
