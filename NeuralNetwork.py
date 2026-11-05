@@ -128,6 +128,36 @@ class Ann2:
         self.maxN = len(self.neurons)
         return neuron
 
+    def removeNeuron(self, index):
+        """Remove a node and remap every connection and relationship index."""
+        self.neurons.pop(index)
+        for neuron in self.neurons:
+            retained_connections = [
+                (source, weight)
+                for source, weight in zip(neuron.conections, neuron.weights)
+                if source != index
+            ]
+            neuron.conections = [
+                source - 1 if source > index else source
+                for source, _ in retained_connections
+            ]
+            neuron.weights = [weight for _, weight in retained_connections]
+            for relation_name in ("child", "parent", "lowest"):
+                relations = getattr(neuron, relation_name)
+                setattr(
+                    neuron,
+                    relation_name,
+                    [
+                        relation - 1 if relation > index else relation
+                        for relation in relations
+                        if relation != index
+                    ],
+                )
+
+        for neuron_id, neuron in enumerate(self.neurons):
+            neuron.id = neuron_id
+        self.maxN = len(self.neurons)
+
     def outSet(self, Id, value):
         """Set a node's externally supplied input value."""
         self.neurons[Id].out = value
@@ -337,6 +367,92 @@ class Ann2:
             i += 1
         self.syncMorphologyPositions()
 
+    def _add_mutation_node(self, neuron_type):
+        """Add one hidden node, physical sensor, or extra linear thruster."""
+        if neuron_type == 0:
+            self.insertNeuron(
+                self.hiddenSize,
+                neuron_type,
+                vector2d(320, 240),
+            )
+            self.hiddenSize += 1
+        elif neuron_type == 1:
+            angle = random.uniform(0, 2 * math.pi)
+            distances = [math.hypot(x, y) for x, y in self.poly]
+            distance = sum(distances) / len(distances) if distances else self.body_radius * 2
+            distance = max(self.body_radius, distance * random.uniform(0.75, 1.25))
+            point = [math.cos(angle) * distance, math.sin(angle) * distance]
+            sensor_index = self.hiddenSize + len(self.poly)
+            self.insertNeuron(
+                sensor_index,
+                neuron_type,
+                vector2d(320 + point[0] * 1.2, 240 + point[1] * 1.2),
+            )
+            self.poly.append(point)
+        else:
+            output_start = self.hiddenSize + len(self.poly) + 2
+            output_count = len(self.neurons) - output_start
+            while output_count < 4:
+                self.insertNeuron(len(self.neurons), 2, vector2d(320, 240))
+                output_count += 1
+            if output_count == 4:
+                self.insertNeuron(len(self.neurons), 2, vector2d(320, 240))
+            self.insertNeuron(len(self.neurons), neuron_type, vector2d(320, 240))
+
+        self.syncMorphologyPositions()
+
+    def _delete_mutation_node(self, neuron_type):
+        """Delete a mutable node without removing velocity or rotation inputs."""
+        if neuron_type == 0:
+            index = random.randrange(self.hiddenSize)
+            self.removeNeuron(index)
+            self.hiddenSize -= 1
+        elif neuron_type == 1:
+            sensor_index = random.randrange(len(self.poly))
+            self.removeNeuron(self.hiddenSize + sensor_index)
+            self.poly.pop(sensor_index)
+        else:
+            output_start = self.hiddenSize + len(self.poly) + 2
+            output_index = random.randrange(5, len(self.neurons) - output_start)
+            self.removeNeuron(output_start + output_index)
+
+        self.syncMorphologyPositions()
+
+    def mutateStructure(self, factor):
+        """Rarely add or remove a structural node, then safely rebuild all links."""
+        if factor <= 0 or random.random() >= min(0.0025 * factor, 0.01):
+            return False
+
+        operations = []
+        if self.hiddenSize < 64:
+            operations.append((0, True))
+        if self.hiddenSize:
+            operations.append((0, False))
+        if len(self.poly) < 32:
+            operations.append((1, True))
+        if self.poly:
+            operations.append((1, False))
+
+        output_start = self.hiddenSize + len(self.poly) + 2
+        output_count = len(self.neurons) - output_start
+        if output_count < 32:
+            operations.append((2, True))
+        if output_count > 5:
+            operations.append((2, False))
+
+        if not operations:
+            return False
+
+        neuron_type, should_add = random.choice(operations)
+        if should_add:
+            self._add_mutation_node(neuron_type)
+        else:
+            self._delete_mutation_node(neuron_type)
+
+        self.connectAllToAll()
+        self.syncMorphologyPositions()
+        return True
+
     def syncMorphologyPositions(self):
         """Align sensor samples and thruster anchors with simulation-local coordinates."""
         center_x = 320
@@ -413,3 +529,4 @@ class Ann2:
             for weight in neuron.weights:
                 neuron.weights[i] += random.randint(-1, 1) * factor
                 i += 1
+        self.mutateStructure(factor)

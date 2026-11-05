@@ -449,6 +449,15 @@ creatures. A positive mutation factor changes both:
   updating mass and maximum health along with the visible body size.
 - **Connection weights:** each stored weight receives a small random
   adjustment scaled by the same factor.
+- **Network structure:** occasionally a mutation adds or removes a hidden
+  neuron, physical sensor, or extra thruster. Sensor mutations update both
+  `poly` and its matching input node; velocity inputs and the reserved rotation
+  output are kept in their required positions. At most 64 hidden nodes, 32
+  sensors, and 32 outputs are allowed. The four base thrusters and rotation
+  output are protected from deletion. After a structural change, ALL-TO-ALL
+  links are rebuilt across the valid source and target layers so shifted node
+  indices cannot leave broken connections. This intentionally resets existing
+  connection weights to 1.0 for that creature.
 
 Creatures also create offspring periodically. When the birth timer passes 300
 frames, the parent network is deep-copied, mutated using the current Radiation
