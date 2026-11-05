@@ -148,8 +148,8 @@ frame does the following:
    before the frame's simulation work. Radiation-slider interaction updates
    the mutation scale; a right click resets the record.
 2. **Clear and draw the arena.** The cached arena background includes the grid.
-   The loop draws a solid pure-red, 10-pixel border immediately afterward,
-   then copies the arena to a separate sensor surface.
+   The loop draws the red gradient border glow, then copies the arena to a
+   separate sensor surface with a solid pure-red border.
 3. **Draw creatures and the godhand.** Creature graphics are drawn on screen;
    the godhand is drawn both on screen and on the sensor surface. This keeps
    creatures from covering up the border or other environmental sensor targets.
@@ -173,7 +173,8 @@ frame does the following:
    while paused.
 
 The order matters. Sensor targets are drawn on a separate copy of the arena so
-creature body and sensor-marker graphics cannot hide the border from sampling.
+creature body and sensor-marker graphics cannot hide the solid-red border from
+sampling, while the display retains the gradient glow.
 Thruster indicators are kept on an overlay because drawing directly to a
 surface while it is exposed as a pixel array can fail or interfere with sensing.
 

@@ -161,6 +161,7 @@ while running:
     ui.draw_arena_border(screen)
     # Keep creature graphics from overwriting environmental sensor targets.
     sensor_surface = screen.copy()
+    ui.draw_sensor_border(sensor_surface)
 
     right_click = pygame.mouse.get_pressed()[2]
     left_click = pygame.mouse.get_pressed()[0]

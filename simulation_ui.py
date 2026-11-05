@@ -13,6 +13,16 @@ class SimulationUI:
         for grid_y in range(25, 400, 25):
             pygame.draw.line(self.background, (11, 24, 35), (0, grid_y), (500, grid_y))
 
+        self.border_glow = pygame.Surface((640, 480), pygame.SRCALPHA)
+        for inset in range(10):
+            alpha = round(220 * (1 - inset / 10) ** 1.5)
+            pygame.draw.rect(
+                self.border_glow,
+                (255, 35, 55, alpha),
+                (1 + inset, 1 + inset, 498 - inset * 2, 398 - inset * 2),
+                1,
+            )
+
         self.font_8 = pygame.font.SysFont("arial", 8)
         self.font_9 = pygame.font.SysFont("arial", 9)
         self.font_10 = pygame.font.SysFont("arial", 10)
@@ -29,9 +39,13 @@ class SimulationUI:
         """Render one UI label onto a surface."""
         surface.blit(font.render(message, True, color), position)
 
+    def draw_arena_border(self, surface):
+        """Draw the red gradient glow around the arena."""
+        surface.blit(self.border_glow, (0, 0))
+
     @staticmethod
-    def draw_arena_border(surface):
-        """Draw a solid-red, ten-pixel arena frame before creatures are rendered."""
+    def draw_sensor_border(surface):
+        """Draw a solid-red sensor target over the arena's border area."""
         red = (255, 0, 0)
         pygame.draw.rect(surface, red, (0, 0, 500, 10))
         pygame.draw.rect(surface, red, (0, 390, 500, 10))
