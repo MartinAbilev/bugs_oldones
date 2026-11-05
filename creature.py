@@ -89,6 +89,9 @@ class Creature:
         """Mutate inherited DNA and synchronize its physical body properties."""
         self.Ann.randomizeWeights(factor)
         self.update_body_properties()
+        self.poly = rotate_polygon(self.Ann.poly, self.angle())
+        if len(self.sensor_values) != len(self.Ann.poly):
+            self.sensor_values = [0] * len(self.Ann.poly)
 
     def read_color(self, pixel_array, center, point_index):
         """Read the red-channel sensor value at one morphology point."""
@@ -210,7 +213,7 @@ class Creature:
 
     def draw_thruster_indicators(self, surface):
         """Draw direction arrows for every thruster; highlight active outputs."""
-        output_start = self.Ann.hiddenSize + len(self.poly) + 2
+        output_start = self.Ann.hiddenSize + len(self.Ann.poly) + 2
         outputs = self.Ann.neurons[output_start:]
         thrusters = [
             (index, neuron.out)

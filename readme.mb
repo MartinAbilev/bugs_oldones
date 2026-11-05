@@ -152,8 +152,10 @@ The dashboard displays:
   creature.
 - **Neural Map**, one row per living creature with colored activation squares.
   Columns are displayed as inputs, hidden neurons, and outputs, in that visual
-  order. The IN/HID/OUT legend shows the current node count in each layer. This
-  display ordering does not change the network's underlying indices.
+  order. The IN/HID/OUT legend shows the current node count in each layer for
+  the first living creature; each row is rendered using that creature's own
+  layer sizes, which can differ after structural mutations. This display
+  ordering does not change the network's underlying indices.
 
 ## How one simulation frame works
 

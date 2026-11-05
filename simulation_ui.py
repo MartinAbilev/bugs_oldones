@@ -98,17 +98,6 @@ class SimulationUI:
             self.text(surface, "awaiting signal", (16, 438), (94, 117, 137), self.font_9)
             return
 
-        neuron_count = len(network.neurons)
-        if neuron_count == 0:
-            return
-
-        # Keep network indices intact while displaying inputs, hidden, then outputs.
-        hidden_end = hidden_count
-        input_end = min(hidden_end + len(network.poly) + 2, neuron_count)
-        input_indices = list(range(hidden_end, input_end))
-        hidden_indices = list(range(hidden_end))
-        output_indices = list(range(input_end, neuron_count))
-        display_indices = input_indices + hidden_indices + output_indices
         row_top = 424
         row_height = bounds.bottom - 4 - row_top
         column_width = bounds.width - 12
@@ -126,17 +115,41 @@ class SimulationUI:
             if y1 <= y0:
                 continue
 
+            row_network = creature.Ann
+            row_neuron_count = len(row_network.neurons)
+            if row_neuron_count == 0:
+                continue
+
+            # Structural mutation can give each creature different layer sizes.
+            row_hidden_end = min(max(row_network.hiddenSize, 0), row_neuron_count)
+            row_input_end = min(
+                row_hidden_end + len(row_network.poly) + 2,
+                row_neuron_count,
+            )
+            input_indices = list(range(row_hidden_end, row_input_end))
+            hidden_indices = list(range(row_hidden_end))
+            output_indices = list(range(row_input_end, row_neuron_count))
+            display_indices = input_indices + hidden_indices + output_indices
+
             for display_index, neuron_index in enumerate(display_indices):
-                neuron = creature.Ann.neurons[neuron_index]
-                x0 = bounds.left + 6 + display_index * column_width // neuron_count
-                x1 = bounds.left + 6 + (display_index + 1) * column_width // neuron_count
+                neuron = row_network.neurons[neuron_index]
+                x0 = (
+                    bounds.left
+                    + 6
+                    + display_index * column_width // row_neuron_count
+                )
+                x1 = (
+                    bounds.left
+                    + 6
+                    + (display_index + 1) * column_width // row_neuron_count
+                )
                 cell_size = max(1, min(x1 - x0, y1 - y0))
                 cell_left = x0 + (x1 - x0 - cell_size) // 2
                 cell_top = y0 + (y1 - y0 - cell_size) // 2
 
-                if neuron_index < hidden_end:
+                if neuron_index < row_hidden_end:
                     base_color = (45, 225, 115)
-                elif neuron_index < input_end:
+                elif neuron_index < row_input_end:
                     base_color = (55, 135, 255)
                 else:
                     base_color = (255, 75, 75)
