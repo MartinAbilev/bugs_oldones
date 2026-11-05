@@ -29,11 +29,14 @@ next_id = 0  # Unique creature/body ID counter.
 life_time_record = 0  # Best lifetime reached since the last record reset.
 radiation = 1.0  # Shared mutation scale controlled by the sidebar slider.
 radiation_slider_dragging = False  # Keeps slider updates active while the mouse is held.
+simulation_paused = False  # Freezes physics and lifecycle while sensors remain visible.
 
 
 def on_lifetime_update(creature, alive_count):
     """Track the best creature and decide when the current generation should end."""
     global best_network, generation_requested, life_time_record
+    if simulation_paused:
+        return
     if creature.time > life_time_record:
         life_time_record = creature.time
         best_network = creature.Ann
@@ -104,6 +107,7 @@ def open_editor():
 running = True
 while running:
     # The current input state controls godhand sensing, mutations, and Radiation.
+    pause_requested = False
     edit_requested = False
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -111,15 +115,25 @@ while running:
         elif (
             event.type == pygame.MOUSEBUTTONDOWN
             and event.button == 1
+            and ui.pause_button.collidepoint(event.pos)
+        ):
+            pause_requested = True
+        elif (
+            event.type == pygame.MOUSEBUTTONDOWN
+            and event.button == 1
             and ui.edit_button.collidepoint(event.pos)
         ):
             edit_requested = True
+
+    if pause_requested:
+        simulation_paused = not simulation_paused
 
     if edit_requested:
         open_editor()
 
     mouse_pos = pygame.mouse.get_pos()
     screen.blit(ui.background, (0, 0))
+    ui.draw_arena_border(screen)
 
     right_click = pygame.mouse.get_pressed()[2]
     left_click = pygame.mouse.get_pressed()[0]
@@ -139,7 +153,7 @@ while running:
     alive_count = 0
     for creature in objects:
         if creature.death == 0:
-            creature.draw(screen)
+            creature.draw(screen, update_lifecycle=not simulation_paused)
             alive_count += 1
 
     if mouse_pos[0] < 500 and mouse_pos[1] < 400:
@@ -150,13 +164,18 @@ while running:
     to_remove = []
     for creature in objects:
         if creature.death == 0:
-            creature.sense(pixel_array, alive_count)
-            if left_click:
+            creature.sense(
+                pixel_array,
+                alive_count,
+                apply_physics=not simulation_paused,
+            )
+            if left_click and not simulation_paused:
                 creature.Ann.randomizeWeights(radiation)
         if creature.death == 1:
             creature.body.active = False
             to_remove.append(creature)
         else:
+            creature.draw_sensor_lights(thruster_overlay)
             creature.draw_thruster_indicators(thruster_overlay)
     del pixel_array
 
@@ -175,12 +194,14 @@ while running:
         life_time_record,
         radiation,
         objects,
+        paused=simulation_paused,
     )
-    world.world.Step(world.timeStep, 32, 32)
-    world.world.ClearForces()
+    if not simulation_paused:
+        world.world.Step(world.timeStep, 32, 32)
+        world.world.ClearForces()
     pygame.display.flip()
 
-    if alive_count <= 0 or generation_requested:
+    if not simulation_paused and (alive_count <= 0 or generation_requested):
         create_next_generation()
 
     clock.tick(60)

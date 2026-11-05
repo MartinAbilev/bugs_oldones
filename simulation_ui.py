@@ -12,36 +12,6 @@ class SimulationUI:
             pygame.draw.line(self.background, (11, 24, 35), (grid_x, 0), (grid_x, 400))
         for grid_y in range(25, 400, 25):
             pygame.draw.line(self.background, (11, 24, 35), (0, grid_y), (500, grid_y))
-        perimeter_glow = pygame.Surface((640, 480), pygame.SRCALPHA)
-        for inset in range(10):
-            alpha = round(220 * (1 - inset / 10) ** 1.5)
-            pygame.draw.rect(
-                perimeter_glow,
-                (255, 35, 55, alpha),
-                (1 + inset, 1 + inset, 498 - inset * 2, 398 - inset * 2),
-                1,
-            )
-        self.background.blit(perimeter_glow, (0, 0))
-        for corner_x, corner_y, sign_x, sign_y in (
-            (8, 8, 1, 1),
-            (492, 8, -1, 1),
-            (8, 392, 1, -1),
-            (492, 392, -1, -1),
-        ):
-            pygame.draw.line(
-                self.background,
-                (255, 70, 82),
-                (corner_x, corner_y),
-                (corner_x + 12 * sign_x, corner_y),
-                2,
-            )
-            pygame.draw.line(
-                self.background,
-                (255, 70, 82),
-                (corner_x, corner_y),
-                (corner_x, corner_y + 12 * sign_y),
-                2,
-            )
 
         self.font_8 = pygame.font.SysFont("arial", 8)
         self.font_9 = pygame.font.SysFont("arial", 9)
@@ -51,12 +21,22 @@ class SimulationUI:
         self.font_20 = pygame.font.SysFont("arial", 20, bold=True)
         self.radiation_slider = pygame.Rect(519, 137, 108, 8)  # Visible slider track.
         self.radiation_slider_hitbox = pygame.Rect(510, 116, 121, 40)
+        self.pause_button = pygame.Rect(582, 59, 42, 27)
         self.edit_button = pygame.Rect(516, 410, 112, 29)  # Opens the network editor.
 
     @staticmethod
     def text(surface, message, position, color, font):
         """Render one UI label onto a surface."""
         surface.blit(font.render(message, True, color), position)
+
+    @staticmethod
+    def draw_arena_border(surface):
+        """Draw a solid-red, ten-pixel arena frame before creatures are rendered."""
+        red = (255, 0, 0)
+        pygame.draw.rect(surface, red, (0, 0, 500, 10))
+        pygame.draw.rect(surface, red, (0, 390, 500, 10))
+        pygame.draw.rect(surface, red, (0, 10, 10, 380))
+        pygame.draw.rect(surface, red, (490, 10, 10, 380))
 
     @staticmethod
     def draw_godhand(surface, position):
@@ -159,7 +139,16 @@ class SimulationUI:
                     1,
                 )
 
-    def draw_dashboard(self, surface, active_count, best_live, record, mutation_rate, objects):
+    def draw_dashboard(
+        self,
+        surface,
+        active_count,
+        best_live,
+        record,
+        mutation_rate,
+        objects,
+        paused=False,
+    ):
         """Render status, mutation controls, lifetime values, and neural signals."""
         text = self.text
         panel = pygame.Rect(505, 0, 135, 480)
@@ -174,6 +163,16 @@ class SimulationUI:
         status_label = "● LIVE" if active_count else "● RESPAWNING"
         pygame.draw.rect(surface, (19, 34, 43), (516, 57, 112, 31), border_radius=6)
         text(surface, status_label, (523, 66), status_color, self.font_10)
+        pause_hovered = self.pause_button.collidepoint(pygame.mouse.get_pos())
+        pause_fill = (104, 49, 53) if paused else (28, 57, 70)
+        pause_edge = (255, 112, 133) if paused else (70, 220, 205)
+        if pause_hovered:
+            pause_fill = (132, 59, 65) if paused else (38, 77, 91)
+        pygame.draw.rect(surface, pause_fill, self.pause_button, border_radius=5)
+        pygame.draw.rect(surface, pause_edge, self.pause_button, 1, border_radius=5)
+        pause_label = "PLAY" if paused else "PAUSE"
+        pause_text = self.font_8.render(pause_label, True, (245, 248, 255))
+        surface.blit(pause_text, pause_text.get_rect(center=self.pause_button.center))
 
         pygame.draw.rect(surface, (15, 25, 39), (513, 99, 119, 70), border_radius=8)
         pygame.draw.rect(surface, (28, 57, 70), (513, 99, 119, 70), 1, border_radius=8)

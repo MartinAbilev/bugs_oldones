@@ -119,6 +119,7 @@ want to preserve the current networks.
 | Left mouse button in the play field | Randomizes living creatures' morphology/color and connection weights continuously while held. The selected mutation scale is applied. |
 | Left mouse button on the Radiation slider | Changes mutation strength from 0× to 2×. Drag to adjust it. |
 | Right mouse button | Resets the displayed lifetime record. |
+| **PAUSE** / **PLAY** button in the LIVE status card | Freezes or resumes physics and creature lifecycle. Sensor sampling, activation updates, and sensor lights continue while paused, so the godhand can be tested against a stationary creature. |
 | Click **EDIT NETWORK** | Pauses the simulation and opens the network editor. |
 
 The red godhand cursor is drawn in the arena when the pointer is over the play
@@ -145,26 +146,30 @@ frame does the following:
 1. **Read UI events and controls.** A request to open the editor is handled
    before the frame's simulation work. Radiation-slider interaction updates
    the mutation scale; a right click resets the record.
-2. **Clear and draw the arena.** The cached arena background includes the grid
-   and red perimeter. Living creatures are drawn at their current Box2D
-   positions, then the godhand is drawn when the pointer is in the field.
+2. **Clear and draw the arena.** The cached arena background includes the grid.
+   The loop draws a solid pure-red, 10-pixel border immediately afterward,
+   before living creatures and the godhand are drawn.
 3. **Capture the visible pixels.** `pygame.surfarray.pixels3d(screen)` exposes
    the rendered screen to the sensors. Pygame locks the surface while this
    pixel view exists, so work that draws to the screen must wait until the view
    is released.
-4. **Sense, evaluate, and actuate living creatures.** Each creature samples
-   the red channel, updates its network, and applies its angular and linear
-   impulses. A left-click mutation is applied to living creatures here.
+4. **Sense and evaluate living creatures.** Each creature samples the red
+   channel and updates its network. While playing, it applies angular and
+   linear impulses and a left-click mutation is applied. While paused, sensor
+   sampling and activation updates continue, but actuation and mutation are
+   disabled.
 5. **Prepare indicators without locking the screen.** Thruster arrows are
    drawn to a separate transparent surface during the creature pass. The pixel
    view is released, then the overlay is composited onto the screen.
 6. **Remove dead creatures and draw the dashboard.** The dashboard receives
    the living objects and lifetime values for this frame.
-7. **Advance Box2D.** The world steps at 1/60 of a second and clears accumulated
-   forces. Pygame then presents the completed frame.
-8. **Start another generation if needed.** If the population is exhausted or
-   the lifetime callback requests a new generation, the best network is saved
-   and new creatures are spawned.
+7. **Advance Box2D when playing.** The world steps at 1/60 of a second and
+   clears accumulated forces. When paused, both operations are skipped, keeping
+   creature positions fixed. Pygame still presents the completed frame.
+8. **Start another generation when playing.** If the population is exhausted
+   or the lifetime callback requests a new generation, the best network is
+   saved and new creatures are spawned. Birth and lifetime timers also stop
+   while paused.
 
 The order matters. In particular, the arena and godhand need to be drawn before
 sensor sampling so their red pixels can be detected. Thruster indicators are
@@ -183,7 +188,9 @@ Creature centers use their Box2D body positions directly for drawing and
 sensor sampling.
 
 The simulation's arena is bounded approximately by X = 0–500 and Y = 0–400.
-The red border is both a visual boundary and a detectable target.
+The red border is both a visual boundary and a detectable target. It is drawn
+as a solid pure-red, 10-pixel frame (no gradient) before creatures are rendered
+and before sensors sample the screen.
 
 ### Morphology points and sensor locations
 
@@ -205,7 +212,11 @@ make the sensor dots and physical creature agree.
 
 The creature renderer draws a colored circular body, a green center marker, and
 small green morphology markers whose brightness reflects sensor-neuron
-activation. The simulation also draws directional indicators for the
+activation. After sampling, the simulation adds bright white sensor lights on a
+separate overlay. Their centers light up for readings above the dark background,
+and their halos brighten with the sampled value. Because this overlay is drawn
+only after the screen pixels have been sampled, a sensor light cannot feed back
+into its own reading. The simulation also draws directional indicators for the
 thrusters: muted arrows indicate inactive/low activation, while brighter yellow
 arrows indicate active thrust.
 

@@ -30,6 +30,7 @@ class Creature:
         self.birthTimer = 0
         self.r = 10
         self.centerpos = 0
+        self.sensor_values = [0] * len(self.Ann.poly)
         self.on_lifetime_update = on_lifetime_update
         self.on_birth = on_birth
         self.body = world.world.CreateDynamicBody(position=position)
@@ -63,8 +64,8 @@ class Creature:
         except Exception:
             return 0
 
-    def sense(self, pixel_array, alive_count):
-        """Sample sensors, evaluate outputs, and apply thrust for this frame."""
+    def sense(self, pixel_array, alive_count, apply_physics=True):
+        """Sample sensors and evaluate the network, optionally actuating the body."""
         if self.death != 0:
             return
 
@@ -73,6 +74,7 @@ class Creature:
             self.read_color(pixel_array, center, index)
             for index in range(len(self.poly))
         ]
+        self.sensor_values = colors
         hidden_size = self.Ann.hiddenSize
         for index, value in enumerate(colors):
             self.Ann.outSet(index + hidden_size, value)
@@ -91,18 +93,19 @@ class Creature:
         power = 100
         outputs = self.Ann.neurons[output_start:]
         rotation = outputs[4].out * power if len(outputs) > 4 else 0
-        self.truster(
-            [
-                (index, neuron.out * power)
-                for index, neuron in enumerate(outputs)
-                if index != 4
-            ],
-            rotation,
-        )
-        self.on_lifetime_update(self, alive_count)
-        self.time += 1
+        if apply_physics:
+            self.truster(
+                [
+                    (index, neuron.out * power)
+                    for index, neuron in enumerate(outputs)
+                    if index != 4
+                ],
+                rotation,
+            )
+            self.on_lifetime_update(self, alive_count)
+            self.time += 1
 
-    def draw(self, surface):
+    def draw(self, surface, update_lifecycle=True):
         """Render the creature and trigger periodic offspring creation."""
         if self.lives <= 0:
             self.death = 1
@@ -140,10 +143,24 @@ class Creature:
                 0,
             )
 
-        self.birthTimer += 1
-        if self.birthTimer > 300:
-            self.birthTimer = 0
-            self.on_birth(self)
+        if update_lifecycle:
+            self.birthTimer += 1
+            if self.birthTimer > 300:
+                self.birthTimer = 0
+                self.on_birth(self)
+
+    def draw_sensor_lights(self, surface):
+        """Draw white lights showing the red-channel values sampled this frame."""
+        for point, value in zip(self.poly, self.sensor_values):
+            brightness = max(0, min(255, int(value)))
+            if brightness <= 16:
+                continue
+
+            x = max(0, min(639, int(self.centerpos.x + point[0] * 1.2)))
+            y = max(0, min(479, int(self.centerpos.y + point[1] * 1.2)))
+            halo_alpha = round(40 + 160 * brightness / 255)
+            pygame.draw.circle(surface, (255, 255, 255, halo_alpha), (x, y), 6)
+            pygame.draw.circle(surface, (255, 255, 255, 255), (x, y), 2)
 
     def draw_thruster_indicators(self, surface):
         """Draw direction arrows for every thruster; highlight active outputs."""
