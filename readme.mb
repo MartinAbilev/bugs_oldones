@@ -244,11 +244,14 @@ make the sensor dots and physical creature agree.
 
 The creature renderer draws a colored circular body, a green center marker, and
 small green morphology markers whose brightness reflects sensor-neuron
-activation. After sampling, the simulation adds bright white sensor lights on a
-separate overlay. Their centers light up for readings above the dark background,
-and their halos brighten with the sampled value. Because this overlay is drawn
-only after the screen pixels have been sampled, a sensor light cannot feed back
-into its own reading. The simulation also draws directional indicators for the
+activation. A nearly transparent, body-colored fill (about 10% opacity) covers
+the area inside the perimeter, with a matching outline to show the cell
+membrane. The fill inherits the creature's main-body color. After sampling, the
+simulation adds this membrane and bright white sensor lights on a separate
+overlay. Sensor light centers show readings above the dark background, and
+their halos brighten with the sampled value. Because these effects are drawn
+only after the screen pixels have been sampled, they cannot feed back into
+sensor readings. The simulation also draws directional indicators for the
 thrusters: muted arrows indicate inactive/low activation, while brighter yellow
 arrows indicate active thrust.
 

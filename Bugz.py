@@ -259,6 +259,7 @@ while running:
             creature.body.active = False
             to_remove.append(creature)
         else:
+            creature.draw_membrane(thruster_overlay)
             creature.draw_sensor_lights(thruster_overlay)
             creature.draw_thruster_indicators(thruster_overlay)
     del pixel_array

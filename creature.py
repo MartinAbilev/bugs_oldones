@@ -211,6 +211,22 @@ class Creature:
             pygame.draw.circle(surface, (255, 255, 255, halo_alpha), (x, y), 6)
             pygame.draw.circle(surface, (255, 255, 255, 255), (x, y), 2)
 
+    def draw_membrane(self, surface):
+        """Draw a subtle translucent, body-colored fill inside the perimeter."""
+        if len(self.poly) < 3:
+            return
+
+        points = [
+            (
+                round(self.centerpos.x + point[0] * 1.2),
+                round(self.centerpos.y + point[1] * 1.2),
+            )
+            for point in self.poly
+        ]
+        color = (255, self.Ann.colorG, self.Ann.colorB, 26)
+        pygame.draw.polygon(surface, color, points)
+        pygame.draw.aalines(surface, color, True, points)
+
     def draw_thruster_indicators(self, surface):
         """Draw direction arrows for every thruster; highlight active outputs."""
         output_start = self.Ann.hiddenSize + len(self.Ann.poly) + 2
