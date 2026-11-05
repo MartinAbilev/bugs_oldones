@@ -30,6 +30,8 @@ life_time_record = 0  # Best lifetime reached since the last record reset.
 radiation = 1.0  # Shared mutation scale controlled by the sidebar slider.
 radiation_slider_dragging = False  # Keeps slider updates active while the mouse is held.
 simulation_paused = False  # Freezes physics and lifecycle while sensors remain visible.
+dragged_creature = None  # Creature currently captured by a middle-button drag.
+creature_drag_offset = b2Vec2(0, 0)  # Keeps the grab point fixed during dragging.
 
 
 def on_lifetime_update(creature, alive_count):
@@ -109,9 +111,27 @@ while running:
     # The current input state controls godhand sensing, mutations, and Radiation.
     pause_requested = False
     edit_requested = False
+    mouse_pos = pygame.mouse.get_pos()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 2:
+            dragged_creature = None
+            if 0 <= event.pos[0] < 500 and 0 <= event.pos[1] < 400:
+                for creature in reversed(objects):
+                    if creature.death != 0:
+                        continue
+                    dx = event.pos[0] - creature.body.position.x
+                    dy = event.pos[1] - creature.body.position.y
+                    if dx * dx + dy * dy <= (creature.r + 6) ** 2:
+                        dragged_creature = creature
+                        creature_drag_offset = b2Vec2(
+                            event.pos[0] - creature.body.position.x,
+                            event.pos[1] - creature.body.position.y,
+                        )
+                        break
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 2:
+            dragged_creature = None
         elif (
             event.type == pygame.MOUSEBUTTONDOWN
             and event.button == 1
@@ -132,6 +152,11 @@ while running:
         open_editor()
 
     mouse_pos = pygame.mouse.get_pos()
+    if dragged_creature is not None and pygame.mouse.get_pressed()[1]:
+        target_x = mouse_pos[0] - creature_drag_offset.x
+        target_y = mouse_pos[1] - creature_drag_offset.y
+        dragged_creature.move_to(b2Vec2(target_x, target_y))
+
     screen.blit(ui.background, (0, 0))
     ui.draw_arena_border(screen)
 

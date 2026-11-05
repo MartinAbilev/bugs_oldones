@@ -118,6 +118,7 @@ want to preserve the current networks.
 |---|---|
 | Left mouse button in the play field | Randomizes living creatures' morphology/color and connection weights continuously while held. The selected mutation scale is applied. |
 | Left mouse button on the Radiation slider | Changes mutation strength from 0× to 2×. Drag to adjust it. |
+| Middle mouse button + drag a creature | Moves the grabbed creature through the arena without a jump; its old momentum is cleared. This also works while paused, so you can position a creature's sensors over the godhand or border. |
 | Right mouse button | Resets the displayed lifetime record. |
 | **PAUSE** / **PLAY** button in the LIVE status card | Freezes or resumes physics and creature lifecycle. Sensor sampling, activation updates, and sensor lights continue while paused, so the godhand can be tested against a stationary creature. |
 | Click **EDIT NETWORK** | Pauses the simulation and opens the network editor. |

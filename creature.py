@@ -52,6 +52,15 @@ class Creature:
         """Advance the creature's layered neural network by one simulation step."""
         self.Ann.annStep()
 
+    def move_to(self, position):
+        """Move the body within the arena and clear momentum while it is dragged."""
+        self.body.position = b2Vec2(
+            max(self.r, min(490, position.x)),
+            max(self.r, min(390, position.y)),
+        )
+        self.body.linearVelocity = b2Vec2(0, 0)
+        self.body.angularVelocity = 0
+
     def read_color(self, pixel_array, center, point_index):
         """Read the red-channel sensor value at one morphology point."""
         x = int(center.x + self.poly[point_index][0] * 1.2)
