@@ -26,9 +26,10 @@ class Creature:
         self.Ann.loadNet(network_file)
         self.step = 0
         self.time = 0  # Frames survived; used for best-lifetime tracking.
-        self.lives = 3
         self.birthTimer = 0
-        self.r = 10
+        self.r = self.Ann.body_radius
+        self.max_lives = 3 * self.r / 10
+        self.lives = self.max_lives
         self.centerpos = 0
         self.sensor_values = [0] * len(self.Ann.poly)
         self.on_lifetime_update = on_lifetime_update
@@ -36,12 +37,7 @@ class Creature:
         self.body = world.world.CreateDynamicBody(position=position)
         self.body.userData = creature_id
         self.poly = self.Ann.poly
-        self.box = self.body.CreateFixture(
-            shape=b2CircleShape(radius=self.r),
-            density=1,
-            friction=0.8,
-            restitution=0.2,
-        )
+        self.box = self._create_body_fixture()
         self.body.angularDamping = 0.99
 
     def angle(self):
@@ -55,11 +51,44 @@ class Creature:
     def move_to(self, position):
         """Move the body within the arena and clear momentum while it is dragged."""
         self.body.position = b2Vec2(
-            max(self.r, min(490, position.x)),
-            max(self.r, min(390, position.y)),
+            max(self.r, min(500 - self.r, position.x)),
+            max(self.r, min(400 - self.r, position.y)),
         )
         self.body.linearVelocity = b2Vec2(0, 0)
         self.body.angularVelocity = 0
+
+    def _create_body_fixture(self):
+        """Create the circular collision fixture using the creature's current size."""
+        return self.body.CreateFixture(
+            shape=b2CircleShape(radius=self.r),
+            density=1,
+            friction=0.8,
+            restitution=0.2,
+        )
+
+    def update_body_properties(self):
+        """Apply inherited or mutated body size to collision, mass, and health."""
+        new_radius = max(5.0, min(20.0, float(self.Ann.body_radius)))
+        self.Ann.body_radius = new_radius
+        if math.isclose(new_radius, self.r):
+            return
+
+        old_max_lives = self.max_lives
+        old_lives = self.lives
+        self.r = new_radius
+        self.max_lives = 3 * self.r / 10
+        self.lives = max(
+            0.0,
+            min(self.max_lives, old_lives * self.max_lives / old_max_lives),
+        )
+        self.body.DestroyFixture(self.box)
+        self.box = self._create_body_fixture()
+        self.body.ResetMassData()
+
+    def mutate(self, factor):
+        """Mutate inherited DNA and synchronize its physical body properties."""
+        self.Ann.randomizeWeights(factor)
+        self.update_body_properties()
 
     def read_color(self, pixel_array, center, point_index):
         """Read the red-channel sensor value at one morphology point."""
@@ -128,7 +157,15 @@ class Creature:
         self.centerpos = position
         self.poly = rotate_polygon(self.Ann.poly, self.angle())
         hidden_size = self.Ann.hiddenSize
-        dcircle(surface, position, self.angle(), self.r, 255, self.Ann.colorG, self.Ann.colorB)
+        dcircle(
+            surface,
+            position,
+            self.angle(),
+            round(self.r),
+            255,
+            self.Ann.colorG,
+            self.Ann.colorB,
+        )
         dcircle(
             surface,
             self.centerpos,

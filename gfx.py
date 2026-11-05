@@ -256,7 +256,7 @@ def drawSimulationMorphology(ann):
     """Show the creature body and sensor samples at their simulation coordinates."""
     center = graphToScreen(vector2d(320, 240))
     center_point = (round(center.x), round(center.y))
-    radius = max(1, round(10 * view_zoom))
+    radius = max(1, round(ann.body_radius * view_zoom))
     pygame.draw.circle(
         w,
         (ann.colorR, ann.colorG, ann.colorB),

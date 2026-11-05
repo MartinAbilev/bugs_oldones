@@ -82,7 +82,7 @@ def create_next_generation():
         )
     for creature in objects:
         if creature.death == 0 and creature.oId <= next_id + 3:
-            creature.Ann.randomizeWeights(radiation)
+            creature.mutate(radiation)
     generation_requested = False
 
 
@@ -104,6 +104,7 @@ def open_editor():
     for creature in objects:
         if creature.death == 0:
             creature.Ann.loadNet("Best")
+            creature.update_body_properties()
 
 
 running = True
@@ -199,7 +200,7 @@ while running:
                 apply_physics=not simulation_paused,
             )
             if left_click and not simulation_paused:
-                creature.Ann.randomizeWeights(radiation)
+                creature.mutate(radiation)
         if creature.death == 1:
             creature.body.active = False
             to_remove.append(creature)

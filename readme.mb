@@ -182,17 +182,25 @@ surface while it is exposed as a pixel array can fail or interfere with sensing.
 
 ### Body and coordinates
 
-Each creature has a circular Box2D body of radius 10, with friction, density,
-restitution, and angular damping configured in `creature.py`. The simulation
-uses screen-like coordinates: positive X points right and positive Y points
-down. `PhysicsWorld` applies gravity `(0, 1)` and creates the arena boundaries.
-Creature centers use their Box2D body positions directly for drawing and
-sensor sampling.
+Each creature has a circular Box2D body whose radius is inherited and mutated
+with its network DNA. Radius is clamped between 5 and 20 world units; older
+network files without a radius use the default of 10. The fixture keeps density
+at 1, so a larger circle has greater mass (proportional to its area) and the
+same thruster impulse accelerates it less. Maximum health is `3 * radius / 10`;
+collisions remove one health point, so larger bodies survive more impacts while
+smaller bodies are lighter but less durable. When a living creature changes
+size, its current health percentage is preserved.
+
+Friction, restitution, and angular damping are also configured in
+`creature.py`. The simulation uses screen-like coordinates: positive X points
+right and positive Y points down. `PhysicsWorld` applies gravity `(0, 1)` and
+creates the arena boundaries. Creature centers use their Box2D body positions
+directly for drawing and sensor sampling.
 
 The simulation's arena is bounded approximately by X = 0–500 and Y = 0–400.
-The red border is both a visual boundary and a detectable target. It is drawn
-as a solid pure-red, 10-pixel frame (no gradient) before creatures are rendered
-and before sensors sample the screen.
+The red border is both a visual boundary and a detectable target. The display
+renders its red gradient glow; a separate solid-red sensor frame ensures
+creature graphics cannot cover the target before sensors sample it.
 
 ### Morphology points and sensor locations
 
@@ -346,6 +354,7 @@ screen size while zooming; their positions move with the graph.
 
 The editor's central creature preview, sensor markers, and thruster arrows are
 drawn in the same graph coordinate system as the simulation-local morphology.
+The preview's central body size follows the network's mutated body radius.
 Network-only hidden nodes and velocity inputs remain separate from physical
 creature parts.
 
@@ -403,6 +412,7 @@ applies impulses. Sorting changes display positions, not connection weights.
 | `colorR`, `colorG`, `colorB` | Creature color values. |
 | `hiddenSize` | Number of leading hidden neurons. |
 | `poly` | Array of local `(x, y)` morphology points. Each point has a matching sensor input. |
+| `body_radius` | Central body radius, clamped to 5–20; missing values in older network files default to 10. |
 | `neurons` | Ordered neuron records. Their positions are also used by the editor and to orient additional thrusters. |
 
 Each neuron record contains:
@@ -434,8 +444,9 @@ mouse button in the play field invokes `randomizeWeights()` on living
 creatures. A positive mutation factor changes both:
 
 - **Morphology/color:** `randomizeDNA()` applies small random changes to
-  morphology coordinates and creature color channels, then synchronizes
-  morphology markers.
+  body radius, morphology coordinates, and creature color channels, then
+  synchronizes morphology markers. Radius changes rebuild the Box2D fixture,
+  updating mass and maximum health along with the visible body size.
 - **Connection weights:** each stored weight receives a small random
   adjustment scaled by the same factor.
 

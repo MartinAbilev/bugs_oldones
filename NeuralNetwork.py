@@ -52,6 +52,7 @@ class Ann2:
         self.colorG = 0
         self.colorB = 0
         self.poly = []  # Sensor/thruster morphology points used by the simulation.
+        self.body_radius = 10.0  # Central body size, inherited and mutated with DNA.
         self.neurons = []
 
     def setPoly(self, p):
@@ -260,6 +261,7 @@ class Ann2:
 
         # Load poly
         self.poly = [[float(p[0]), float(p[1])] for p in data['poly']]
+        self.body_radius = max(5.0, min(20.0, float(data.get('body_radius', 10.0))))
 
         # Load neurons
         for neuron_data in data['neurons']:
@@ -294,6 +296,7 @@ class Ann2:
             'colorB': self.colorB,
             'hiddenSize': self.hiddenSize,
             'poly': [[float(p[0]), float(p[1])] for p in self.poly],
+            'body_radius': self.body_radius,
             'neurons': []
         }
 
@@ -316,9 +319,13 @@ class Ann2:
             json.dump(data, f, indent=4)
 
     def randomizeDNA(self, factor):
-        """Mutate creature colors and morphology, then refresh editor marker positions."""
+        """Mutate body size, colors, and morphology, then refresh editor markers."""
         self.colorG = max(0, min(255, round(self.colorG + random.randint(-100, 100) * factor)))
         self.colorB = max(0, min(255, round(self.colorB + random.randint(-100, 100) * factor)))
+        self.body_radius = max(
+            5.0,
+            min(20.0, self.body_radius + random.randint(-1, 1) * factor),
+        )
         i = 0
         for pol in self.poly:
             rnd = random.randint(-1, 1) * factor
