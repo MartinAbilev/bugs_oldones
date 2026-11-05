@@ -68,6 +68,16 @@ class SimulationUI:
         pygame.draw.rect(surface, (23, 86, 81), bounds, 1, border_radius=6)
 
         living_creatures = [obj for obj in objects if obj.death == 0]
+        network = living_creatures[0].Ann if living_creatures else None
+        if network is None:
+            input_count = hidden_count = output_count = 0
+        else:
+            neuron_count = len(network.neurons)
+            hidden_count = min(max(network.hiddenSize, 0), neuron_count)
+            input_end = min(hidden_count + len(network.poly) + 2, neuron_count)
+            input_count = input_end - hidden_count
+            output_count = neuron_count - input_end
+
         self.text(
             surface,
             "NEURAL MAP",
@@ -76,27 +86,24 @@ class SimulationUI:
             self.font_9,
         )
         legend = (
-            ("IN", (55, 135, 255)),
-            ("HID", (45, 225, 115)),
-            ("OUT", (255, 75, 75)),
+            (f"IN {input_count}", (55, 135, 255)),
+            (f"HID {hidden_count}", (45, 225, 115)),
+            (f"OUT {output_count}", (255, 75, 75)),
         )
-        legend_x = 338
-        for label, color in legend:
+        for (label, color), legend_x in zip(legend, (325, 382, 438)):
             pygame.draw.rect(surface, color, (legend_x, 412, 5, 5))
-            self.text(surface, label, (legend_x + 8, 410), color, self.font_9)
-            legend_x += 48
+            self.text(surface, label, (legend_x + 7, 410), color, self.font_9)
 
         if not living_creatures:
             self.text(surface, "awaiting signal", (16, 438), (94, 117, 137), self.font_9)
             return
 
-        network = living_creatures[0].Ann
         neuron_count = len(network.neurons)
         if neuron_count == 0:
             return
 
         # Keep network indices intact while displaying inputs, hidden, then outputs.
-        hidden_end = min(network.hiddenSize, neuron_count)
+        hidden_end = hidden_count
         input_end = min(hidden_end + len(network.poly) + 2, neuron_count)
         input_indices = list(range(hidden_end, input_end))
         hidden_indices = list(range(hidden_end))
