@@ -159,6 +159,8 @@ while running:
 
     screen.blit(ui.background, (0, 0))
     ui.draw_arena_border(screen)
+    # Keep creature graphics from overwriting environmental sensor targets.
+    sensor_surface = screen.copy()
 
     right_click = pygame.mouse.get_pressed()[2]
     left_click = pygame.mouse.get_pressed()[0]
@@ -183,9 +185,10 @@ while running:
 
     if mouse_pos[0] < 500 and mouse_pos[1] < 400:
         ui.draw_godhand(screen, mouse_pos)
+        ui.draw_godhand(sensor_surface, mouse_pos)
 
     thruster_overlay.fill((0, 0, 0, 0))
-    pixel_array = pygame.surfarray.pixels3d(screen)
+    pixel_array = pygame.surfarray.pixels3d(sensor_surface)
     to_remove = []
     for creature in objects:
         if creature.death == 0:

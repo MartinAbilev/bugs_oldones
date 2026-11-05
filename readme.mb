@@ -149,16 +149,16 @@ frame does the following:
    the mutation scale; a right click resets the record.
 2. **Clear and draw the arena.** The cached arena background includes the grid.
    The loop draws a solid pure-red, 10-pixel border immediately afterward,
-   before living creatures and the godhand are drawn.
-3. **Capture the visible pixels.** `pygame.surfarray.pixels3d(screen)` exposes
-   the rendered screen to the sensors. Pygame locks the surface while this
-   pixel view exists, so work that draws to the screen must wait until the view
-   is released.
+   then copies the arena to a separate sensor surface.
+3. **Draw creatures and the godhand.** Creature graphics are drawn on screen;
+   the godhand is drawn both on screen and on the sensor surface. This keeps
+   creatures from covering up the border or other environmental sensor targets.
 4. **Sense and evaluate living creatures.** Each creature samples the red
    channel and updates its network. While playing, it applies angular and
    linear impulses and a left-click mutation is applied. While paused, sensor
    sampling and activation updates continue, but actuation and mutation are
-   disabled.
+   disabled. Pygame locks the sensor surface while its pixel view exists, so
+   drawing to that surface must wait until the view is released.
 5. **Prepare indicators without locking the screen.** Thruster arrows are
    drawn to a separate transparent surface during the creature pass. The pixel
    view is released, then the overlay is composited onto the screen.
@@ -172,10 +172,10 @@ frame does the following:
    saved and new creatures are spawned. Birth and lifetime timers also stop
    while paused.
 
-The order matters. In particular, the arena and godhand need to be drawn before
-sensor sampling so their red pixels can be detected. Thruster indicators are
-kept on an overlay because drawing directly to a surface while it is exposed as
-a pixel array can fail or interfere with sensing.
+The order matters. Sensor targets are drawn on a separate copy of the arena so
+creature body and sensor-marker graphics cannot hide the border from sampling.
+Thruster indicators are kept on an overlay because drawing directly to a
+surface while it is exposed as a pixel array can fail or interfere with sensing.
 
 ## Creatures, sensors, and physics
 
