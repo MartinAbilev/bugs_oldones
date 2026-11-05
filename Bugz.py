@@ -10,6 +10,7 @@ from Box2D import b2Vec2
 from NeuralNetwork import Ann2
 from creature import Creature
 from physics import PhysicsWorld
+from radiation import RadiationField
 from simulation_ui import SimulationUI
 
 
@@ -19,6 +20,7 @@ pygame.display.set_caption("BUGZ // NEURAL SWARM")
 clock = pygame.time.Clock()
 ui = SimulationUI()
 thruster_overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+radiation_field = RadiationField(screen.get_size())
 
 # The contact listener keeps this shared list to map Box2D bodies back to creatures.
 objects = []
@@ -179,6 +181,13 @@ while running:
     if right_click:
         life_time_record = 0
 
+    radiation_field.update_and_draw(
+        screen,
+        objects,
+        radiation,
+        clock.get_time() / 1000,
+    )
+
     alive_count = 0
     for creature in objects:
         if creature.death == 0:
@@ -209,6 +218,7 @@ while running:
             creature.draw_thruster_indicators(thruster_overlay)
     del pixel_array
 
+    screen.blit(radiation_field.track_surface, (0, 0))
     screen.blit(thruster_overlay, (0, 0))
     for creature in to_remove:
         objects.remove(creature)

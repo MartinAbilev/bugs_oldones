@@ -117,7 +117,7 @@ want to preserve the current networks.
 | Input | Effect |
 |---|---|
 | Left mouse button in the play field | Randomizes living creatures' morphology/color and connection weights continuously while held. The selected mutation scale is applied. |
-| Left mouse button on the Radiation slider | Changes mutation strength from 0× to 2×. Drag to adjust it. |
+| Left mouse button on the Radiation slider | Changes mutation strength from 0× to 2× and scales the visual background radiation-particle rate. Drag to adjust it. |
 | Middle mouse button + drag a creature | Moves the grabbed creature through the arena without a jump; its old momentum is cleared. This also works while paused, so you can position a creature's sensors over the godhand or border. |
 | Right mouse button | Resets the displayed lifetime record. |
 | **PAUSE** / **PLAY** button in the LIVE status card | Freezes or resumes physics and creature lifecycle. Sensor sampling, activation updates, and sensor lights continue while paused, so the godhand can be tested against a stationary creature. |
@@ -125,6 +125,19 @@ want to preserve the current networks.
 
 The red godhand cursor is drawn in the arena when the pointer is over the play
 field. It is also part of the rendered image that sensors can sample.
+
+The Radiation slider also controls a visual field of faint particles moving
+diagonally through the arena: 12 particles per second at 1× and 24 per second
+at 2×. Incoming rays travel straight. When a ray hits the central body or a
+physical sensor marker, it spawns a tiny emitter that spirals away from the hit
+point. Spiral speed, eccentricity, size, and lifetime vary per hit, so tracks
+have different shapes. Their speed, radial growth, eccentricity, and emission
+rate also change during each emitter's lifetime; some start spiraling
+immediately, while others drift first and curl later. A few use a
+golden-ratio-like expanding spiral. Emitters run at 2× speed and leave
+individual stationary cyan-white pixels that fade in place, like cloud-chamber
+tracks. This effect is cosmetic; it does not change health, physics, or sensor
+readings. It keeps animating while the simulation is paused.
 
 The dashboard displays:
 
@@ -150,24 +163,28 @@ frame does the following:
 2. **Clear and draw the arena.** The cached arena background includes the grid.
    The loop draws the red gradient border glow, then copies the arena to a
    separate sensor surface with a solid pure-red border.
-3. **Draw creatures and the godhand.** Creature graphics are drawn on screen;
+3. **Update background radiation.** Faint particles travel straight and
+   diagonally across the arena at a rate set by Radiation. On impact, a small
+   spiral emitter deposits fading, stationary cyan-white pixels. These effects
+   are visual only and are excluded from sensor sampling.
+4. **Draw creatures and the godhand.** Creature graphics are drawn on screen;
    the godhand is drawn both on screen and on the sensor surface. This keeps
    creatures from covering up the border or other environmental sensor targets.
-4. **Sense and evaluate living creatures.** Each creature samples the red
+5. **Sense and evaluate living creatures.** Each creature samples the red
    channel and updates its network. While playing, it applies angular and
    linear impulses and a left-click mutation is applied. While paused, sensor
    sampling and activation updates continue, but actuation and mutation are
    disabled. Pygame locks the sensor surface while its pixel view exists, so
    drawing to that surface must wait until the view is released.
-5. **Prepare indicators without locking the screen.** Thruster arrows are
+6. **Prepare indicators without locking the screen.** Thruster arrows are
    drawn to a separate transparent surface during the creature pass. The pixel
    view is released, then the overlay is composited onto the screen.
-6. **Remove dead creatures and draw the dashboard.** The dashboard receives
+7. **Remove dead creatures and draw the dashboard.** The dashboard receives
    the living objects and lifetime values for this frame.
-7. **Advance Box2D when playing.** The world steps at 1/60 of a second and
+8. **Advance Box2D when playing.** The world steps at 1/60 of a second and
    clears accumulated forces. When paused, both operations are skipped, keeping
    creature positions fixed. Pygame still presents the completed frame.
-8. **Start another generation when playing.** If the population is exhausted
+9. **Start another generation when playing.** If the population is exhausted
    or the lifetime callback requests a new generation, the best network is
    saved and new creatures are spawned. Birth and lifetime timers also stop
    while paused.
@@ -482,6 +499,7 @@ and mutation policy are defined directly in `Bugz.py`.
 | `NeuralNetwork.py` | `Neuron2` and `Ann2`: node state, activation, layer ordering, connection operations, morphology synchronization, thruster vectors, sorting, persistence, and mutation. |
 | `creature.py` | `Creature`: Box2D body setup, red-channel sensing, network input/output integration, creature rendering, thruster indicator rendering, and force application. |
 | `physics.py` | Box2D world, arena boundaries, timestep, and contact listener. |
+| `radiation.py` | Background radiation particles and fading cloud-chamber impact trails. |
 | `simulation_ui.py` | Simulation background, godhand drawing, dashboard, controls, lifetime information, and neural activity displays. |
 | `simulation_utils.py` | Shared point type and simple geometry/drawing helpers. |
 | `gfx.py` | Editor window, node drawing, viewport transforms, mouse interaction, morphology preview, sidebar, and network tools. |
